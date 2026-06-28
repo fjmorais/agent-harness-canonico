@@ -41,20 +41,6 @@ Antes de qualquer coisa, pergunte ao usuário onde instalar:
 - Se informar outro path: valide que o path existe com `ls <path>`. Se não existir, pergunte se deve criar com `mkdir -p`.
 - Todos os comandos do processo a seguir operam **relativos a essa pasta de destino**.
 
-### Passo 0.5 — Coletar contexto de domínio (para CONTEXT.md)
-
-Antes de detectar o estado do projeto, faça as 4 perguntas abaixo.
-As respostas pre-populam o `CONTEXT.md` — **não invente nada**; use só o que o usuário disser.
-
-> 1. "Qual é o domínio deste projeto?" (ex: e-commerce, detecção de fraude, quiz educacional)
-> 2. "Liste os 5-10 principais termos ou entidades do domínio" (ex: pedido, produto, cliente)
-> 3. "Há acrônimos ou siglas específicas do time/empresa que o agente precisa conhecer?"
-> 4. "Há regras de negócio não-óbvias que parecem óbvias para o time mas que um de fora não saberia?"
-
-Se o usuário responder "não sei ainda", "pular" ou deixar em branco: gerar `CONTEXT.md` como
-esqueleto vazio (formato anterior). Se responder com conteúdo: pré-popular as seções conforme
-o template de execução do Passo 4.
-
 ### Passo 1 — Detectar estado do projeto alvo
 
 ```bash
@@ -128,7 +114,7 @@ Apresente ANTES de qualquer escrita:
 ## GERAR (projeto-específico)
 - CLAUDE.md                                    [GERAR com stack detectada]
 - AGENTS.md                                    [GERAR espelho portátil — Cursor/Windsurf/Codex]
-- CONTEXT.md                                   [GERAR com domínio coletado no Passo 0.5]
+- CONTEXT.md                                   [SKELETON — preencher via /grill-with-docs]
 - settings.json                                [GERAR com hooks da stack]
 - HANDOFF.md                                   [TEMPLATE]
 - .cursor/rules/estilo-codigo.mdc              [GERAR espelho de .claude/rules/estilo-codigo.md]
@@ -159,41 +145,6 @@ Confirma este plano? (s/n)
 - Nome do projeto: `basename $(pwd)`
 - Stack detectada: resumo de 1 linha
 - Hooks no settings.json: adaptados à stack (Python → ruff + mypy + pytest; JS → eslint + vitest)
-
-**Para `CONTEXT.md` (pré-populado com domínio do Passo 0.5):**
-Se o usuário respondeu as perguntas de domínio, gere no formato abaixo. Se deixou vazio, crie
-apenas o cabeçalho com instrução de preenchimento via `/grill-with-docs`.
-
-```markdown
-# Glossário de domínio — [nome do projeto]
-
-> Iniciado pelo /install-harness. Refinar com /grill-with-docs junto ao especialista de domínio.
-> Cada termo deve ter: definição precisa + sinônimos usados pelo time + o que NÃO é.
-
----
-
-## Domínio
-[resposta da pergunta 1 — ex: "Quiz educacional para formação em IA"]
-
-## Termos do domínio
-
-| Termo | Definição | Sinônimos | O que NÃO é |
-|---|---|---|---|
-| [termo 1] | (preencher com /grill-with-docs) | — | — |
-| [termo 2] | (preencher com /grill-with-docs) | — | — |
-
-(um stub por termo listado na resposta da pergunta 2)
-
-## Acrônimos e siglas
-
-| Sigla | Significado |
-|---|---|
-(respostas da pergunta 3, ou "(nenhum informado)")
-
-## Regras de negócio implícitas
-
-(respostas da pergunta 4, ou "(preencher com /grill-with-docs)")
-```
 
 **Para `.cursor/` (espelho estrutural completo):** após instalar tudo em `.claude/`, espelhe em `.cursor/` seguindo a tabela:
 

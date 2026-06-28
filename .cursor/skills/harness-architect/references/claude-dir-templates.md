@@ -236,33 +236,28 @@ Glossário de termos específicos do projeto. Preenchido via `/grill-with-docs` 
 especialista de domínio. **Não invente termos** — crie só o esqueleto.
 
 ```markdown
-# Glossário de domínio — [nome do projeto]
+# Glossário de domínio
 
-> Iniciado pelo /install-harness ou /harness-architect. Refinar com /grill-with-docs.
-> Cada termo deve ter: definição precisa + sinônimos usados pelo time + o que NÃO é.
+> Criado e mantido pelo `/grill-with-docs`. Vocabulário do domínio — não implementação.
+> Cada termo deve ter: definição precisa + sinônimos usados pelo cliente + o que NÃO é.
+>
+> Deixe este arquivo vazio até rodar `/grill-with-docs` com o especialista de domínio.
+> O agente vai preencher durante o grill.
 
 ---
 
-## Domínio
-[descrição em 1-2 frases do domínio do projeto]
-
 ## Termos do domínio
 
-| Termo | Definição | Sinônimos | O que NÃO é |
-|---|---|---|---|
-| [termo 1] | (preencher com /grill-with-docs) | — | — |
-| [termo 2] | (preencher com /grill-with-docs) | — | — |
+> (vazio — preencher via /grill-with-docs)
 
 ## Acrônimos e siglas
 
-| Sigla | Significado |
-|---|---|
-| — | (preencher com /grill-with-docs) |
+> (vazio — preencher via /grill-with-docs)
 
 ## Regras de negócio implícitas
 
 > Regras que o domínio assume como óbvias mas que o agente precisa conhecer.
-> (preencher com /grill-with-docs junto ao especialista de domínio)
+> (vazio — preencher via /grill-with-docs)
 ```
 
 > Formato completo com exemplos em `.claude/skills/grill-with-docs/CONTEXT-FORMAT.md`.
