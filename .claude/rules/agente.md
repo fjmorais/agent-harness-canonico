@@ -1,0 +1,49 @@
+---
+# Regras do agente LLM/grafo — carrega ao tocar o código do agente.
+# Adapte os paths: conforme a estrutura do seu projeto.
+paths:
+  - "backend/agent/**"
+  - "src/agent/**"
+---
+
+# Agente — [TOPOLOGIA_DO_GRAFO]
+
+> **PLACEHOLDER** — preencha esta seção com a topologia real do seu agente após o /grill-me e /to-prd.
+> Modelo: [agente de vendas com LangGraph determinístico | pipeline de RAG | agente de análise X]
+
+O agente é um **grafo [DETERMINÍSTICO / REATIVO]**, não um ReAct livre sem controle.
+O engenheiro projeta a topologia; o LLM decide **só dentro de um nó**. Estas regras são
+invariantes — quebrar uma é bug, não escolha de design.
+
+## Topologia
+
+- **[DESCREVER_TOPOLOGIA]** Ex.: `planejar → buscar → sintetizar → responder`
+- Sem laço de tool-calling livre comandado pelo LLM. Roteamento entre nós é **código**, não
+  decisão de LLM solta.
+- Fan-out (ex.: por condição de negócio) é data-driven, não LLM-driven.
+
+## Tools
+
+- **[TOOL_PRINCIPAL]** é tool única parametrizada pelo [PARÂMETRO]. O nó escolhe; o LLM não fica
+  num laço escolhendo tool.
+- **[TOOL_SQL / TOOL_SEARCH]**: somente-leitura, com guardrails determinísticos aplicados
+  **antes** do store (allowlist, LIMIT garantido) **e reforçados no store**
+  ([role RO / SET TRANSACTION READ ONLY / statement_timeout]).
+  **NUNCA** `INSERT/UPDATE/DELETE/DDL` no [SCHEMA_DE_NEGOCIO].
+
+## Enriquecimento / Retrieval
+
+- **Sempre filtrado** por [CAMPO_TEMPORAL] + [DIMENSAO] + [KPI_ALVO / INTENÇÃO].
+- **NUNCA** filtre por [CAMPO_INGESTAO] — `[CAMPO_TEMPORAL] ≠ [CAMPO_INGESTAO]`.
+  Confundir os dois é o erro clássico: filtre pelo período do *negócio*, não pela data de indexação.
+
+## Grounding (regra de ouro do produto)
+
+- **Toda recomendação nasce de uma fonte rastreável recuperada.** Recomendação sem fonte = falha.
+  Se não há fonte para o caso, diga isso — não invente.
+
+## Premissas
+
+- Diante de ambiguidade, assuma defaults sensatos e **declare as premissas** ao usuário.
+  Só devolva pergunta quando nada é resolvível via default.
+- Modelos via config (pydantic-settings ou equivalente). Não hardcode model id.

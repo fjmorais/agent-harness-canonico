@@ -1,0 +1,19 @@
+{
+  "mcpServers": {
+    "context7": {
+      "command": "npx",
+      "args": ["-y", "@upstash/context7-mcp@latest"],
+      "env": {}
+    },
+    "postgres": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-postgres",
+        "[POSTGRES_CONNECTION_STRING]",
+        "--access-mode=restricted"
+      ],
+      "comment": "Substitua [POSTGRES_CONNECTION_STRING] pela connection string real. access-mode=restricted garante somente leitura. Preencher após /harness-architect detectar o banco."
+    }
+  }
+}

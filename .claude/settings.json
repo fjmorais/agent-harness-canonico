@@ -1,0 +1,86 @@
+{
+  "env": {
+    "PYTHONUNBUFFERED": "1"
+  },
+  "permissions": {
+    "allow": [
+      "Read",
+      "Edit",
+      "Write",
+      "Bash(uv run:*)",
+      "Bash(uv sync:*)",
+      "Bash(uv add:*)",
+      "Bash(uv lock:*)",
+      "Bash(uvx:*)",
+      "Bash(ruff:*)",
+      "Bash(mypy:*)",
+      "Bash(pytest:*)",
+      "Bash(pip:*)",
+      "Bash(python:*)",
+      "Bash(alembic:*)",
+      "Bash(npm:*)",
+      "Bash(npx:*)",
+      "Bash(node:*)",
+      "Bash(gh:*)",
+      "Bash(git status:*)",
+      "Bash(git diff:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(git push:*)",
+      "Bash(git log:*)",
+      "Bash(git branch:*)",
+      "Bash(git switch:*)",
+      "Bash(git checkout:*)",
+      "Bash(docker compose:*)",
+      "Bash(docker ps:*)",
+      "Bash(docker logs:*)",
+      "Bash(databricks:*)",
+      "Bash(spark-submit:*)",
+      "Bash(airflow:*)",
+      "Bash(ls:*)",
+      "Bash(find:*)",
+      "Bash(grep:*)",
+      "Bash(cat:*)",
+      "Bash(mkdir:*)",
+      "Bash(touch:*)",
+      "Bash(cp:*)",
+      "Bash(mv:*)"
+    ],
+    "deny": [
+      "Bash(rm -rf:*)",
+      "Bash(docker compose down -v:*)",
+      "Bash(docker compose down --volumes:*)",
+      "Bash(docker volume rm:*)",
+      "Bash(docker volume prune:*)",
+      "Bash(dropdb:*)",
+      "Bash(mysqladmin drop:*)",
+      "Bash(databricks workspace delete:*)",
+      "Bash(databricks clusters delete:*)",
+      "Bash(git push --force:*)",
+      "Bash(git reset --hard:*)"
+    ]
+  },
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "SRC=$([ -d backend ] && echo backend || [ -d src ] && echo src || echo ''); [ -z \"$SRC\" ] && exit 0; uv run ruff format $SRC 2>/dev/null; uv run ruff check --fix $SRC 2>/dev/null; true"
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "SRC=$([ -d backend ] && echo backend || [ -d src ] && echo src || echo ''); [ -z \"$SRC\" ] && exit 0; uv run ruff check $SRC && uv run mypy $SRC && uv run pytest -q || exit 2"
+          }
+        ]
+      }
+    ]
+  }
+}
