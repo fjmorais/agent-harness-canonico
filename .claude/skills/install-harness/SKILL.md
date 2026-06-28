@@ -30,17 +30,31 @@ Se não existir, peça o path correto ao usuário antes de prosseguir.
 
 ## Processo
 
+### Passo 0 — Estabelecer pasta de destino
+
+Antes de qualquer coisa, pergunte ao usuário onde instalar:
+
+> "Em qual pasta devo instalar/atualizar o harness?
+> (Enter para usar o diretório atual: `$(pwd)`)"
+
+- Se o usuário confirmar o diretório atual, prossiga de onde está.
+- Se informar outro path: valide que o path existe com `ls <path>`. Se não existir, pergunte se deve criar com `mkdir -p`.
+- Todos os comandos do processo a seguir operam **relativos a essa pasta de destino**.
+
 ### Passo 1 — Detectar estado do projeto alvo
 
 ```bash
+# Substitua TARGET pela pasta de destino confirmada no Passo 0
+TARGET="/path/confirmado/pelo/usuario"
+
 # Detecta harness existente
-find .claude/ -type f 2>/dev/null | head -20
-cat .claude/harness-manifest.json 2>/dev/null || echo "SEM_MANIFEST"
+find "$TARGET/.claude/" -type f 2>/dev/null | head -20
+cat "$TARGET/.claude/harness-manifest.json" 2>/dev/null || echo "SEM_MANIFEST"
 
 # Detecta stack
-ls pyproject.toml package.json docker-compose.yml 2>/dev/null
+ls "$TARGET/pyproject.toml" "$TARGET/package.json" "$TARGET/docker-compose.yml" 2>/dev/null
 grep -r "langgraph\|fastapi\|supabase\|langfuse\|qdrant\|pgvector\|airflow\|spark\|dbt" \
-  pyproject.toml package.json 2>/dev/null | head -20
+  "$TARGET/pyproject.toml" "$TARGET/package.json" 2>/dev/null | head -20
 ```
 
 Classifique em um dos três modos:
@@ -58,7 +72,7 @@ Use a tabela abaixo para decidir o que instalar com base na stack detectada:
 
 | Categoria | Artefatos do canônico | Condição |
 |---|---|---|
-| **Foundation** (sempre) | CLAUDE.md¹, AGENTS.md¹, CONTEXT.md¹, settings.json¹, HANDOFF.md¹ | Sempre — gerar projeto-específico |
+| **Foundation** (sempre) | CLAUDE.md¹, AGENTS.md¹, CONTEXT.md¹, settings.json¹, HANDOFF.md¹, `.cursor/rules/`² | Sempre — gerar projeto-específico |
 | **Dev workflow** (sempre) | skills: harness-architect, grill-me, grill-with-docs, to-prd, to-tasks, to-issues, new-adr, sync-context, make-readme, handoff, write-a-skill | Sempre — copiar do canônico |
 | **Code quality** (sempre) | skills: gen-tests; rules: estilo-codigo, testes, seguranca, definicao-de-pronto; agents: codebase-explorer, revisor-codigo, meeting-analyst | Sempre — copiar do canônico |
 | **Python/FastAPI** | kb/fastapi/, rules/backend.md, agents/sql-architect.md | `pyproject.toml` detectado |
@@ -71,6 +85,7 @@ Use a tabela abaixo para decidir o que instalar com base na stack detectada:
 | **Pipeline/dados** | kb/pipeline/, rules/pipeline.md | `airflow`, `spark` ou `dbt` em deps |
 
 ¹ Arquivo gerado (não copiado) — usa a stack e nome do projeto detectados.
+² `.cursor/rules/` é espelho das `.claude/rules/` instaladas, convertido para formato Cursor (`.mdc`).
 
 ### Passo 3 — Montar e apresentar o Install Plan
 
@@ -89,10 +104,14 @@ Apresente ANTES de qualquer escrita:
 
 ## GERAR (projeto-específico)
 - CLAUDE.md                                    [GERAR com stack detectada]
-- AGENTS.md                                    [GERAR espelho portátil]
+- AGENTS.md                                    [GERAR espelho portátil — Cursor/Windsurf/Codex]
 - CONTEXT.md                                   [SKELETON — preencher via /grill-with-docs]
 - settings.json                                [GERAR com hooks da stack]
 - HANDOFF.md                                   [TEMPLATE]
+- .cursor/rules/estilo-codigo.mdc              [GERAR espelho de .claude/rules/estilo-codigo.md]
+- .cursor/rules/testes.mdc                     [GERAR espelho de .claude/rules/testes.md]
+- .cursor/rules/seguranca.mdc                  [GERAR espelho de .claude/rules/seguranca.md]
+- .cursor/rules/<stack>.mdc                    [GERAR espelhos das rules de stack instaladas]
 
 ## PULAR (stack não detectada)
 - .claude/kb/pipeline/                         (sem airflow/spark/dbt)
@@ -109,12 +128,59 @@ Confirma este plano? (s/n)
 
 ### Passo 4 — Executar (somente após confirmação)
 
-**Para arquivos COPIAR:** copie do canônico para o projeto. Se o arquivo já existe e não está no manifest (modo `SEM_HARNESS`), skip sem sobrescrever — liste como `[SKIPPED — já existe]`.
+**Destino:** sempre use o `TARGET` definido no Passo 0. Nunca escreva no diretório atual se o usuário escolheu outro destino.
+
+**Para arquivos COPIAR:** copie do canônico para `$TARGET`. Se o arquivo já existe e não está no manifest (modo `SEM_HARNESS`), skip sem sobrescrever — liste como `[SKIPPED — já existe]`.
 
 **Para arquivos GERAR:** use os templates de `.claude/skills/harness-architect/references/claude-dir-templates.md`. Preencha com:
 - Nome do projeto: `basename $(pwd)`
 - Stack detectada: resumo de 1 linha
 - Hooks no settings.json: adaptados à stack (Python → ruff + mypy + pytest; JS → eslint + vitest)
+
+**Para `.cursor/` (espelho estrutural completo):** após instalar tudo em `.claude/`, espelhe em `.cursor/` seguindo a tabela:
+
+| `.claude/` | `.cursor/` | Operação |
+|---|---|---|
+| `rules/*.md` | `rules/*.mdc` | CONVERTER (formato Cursor) |
+| `agents/` | `agents/` | COPIAR igual |
+| `skills/` | `skills/` | COPIAR igual |
+| `kb/` | `kb/` | COPIAR igual |
+| `commands/` | `commands/` | COPIAR igual |
+| `design/` | `design/` | COPIAR igual (features/, archive/, reports/) |
+| `projetos/` | `projetos/` | COPIAR igual |
+| `settings.json` | ❌ | NÃO espelhar |
+| `.mcp.json` | ❌ | NÃO espelhar |
+
+`design/` contém documentos de design de feature (não confundir com SDD = Spec Driven Development, que é uma metodologia). `projetos/` contém o histórico de ciclo de vida de cada projeto.
+
+O Cursor não executa agents, skills ou KB nativamente, mas o usuário pode `@`-mencionar qualquer arquivo: `@.cursor/kb/fastapi/index.md`. A estrutura espelhada mantém tudo acessível.
+
+**Para `.cursor/rules/` (conversão):** para cada `.claude/rules/*.md` instalado, crie o arquivo
+espelho em `.cursor/rules/<mesmo-nome>.mdc` com o formato Cursor:
+
+```
+---
+description: [primeira linha de descrição da rule original]
+globs: [paths: da rule original, convertido para array JSON]
+alwaysApply: [true se sem paths:, false se path-scoped]
+---
+
+[conteúdo da rule original, sem o frontmatter]
+```
+
+Exemplo — `.claude/rules/backend.md` → `.cursor/rules/backend.mdc`:
+```
+---
+description: Regras ao editar o backend FastAPI
+globs: ["backend/**"]
+alwaysApply: false
+---
+
+[conteúdo do backend.md a partir daqui]
+```
+
+`AGENTS.md` é gerado como espelho do `CLAUDE.md` sem referências ao `.claude/` — conteúdo:
+stack, comandos, invariantes, "onde fica o quê". Sem rules, hooks ou MCP (inexistentes em Cursor).
 
 **Para modo `ATUALIZAÇÃO`:** só atualiza artefatos com `"customized": false` no manifest onde o arquivo do canônico é mais novo que o instalado.
 
