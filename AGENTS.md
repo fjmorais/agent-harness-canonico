@@ -32,7 +32,7 @@
 | O que | Onde | Qtd |
 |---|---|---|
 | Agents | `.cursor/agents/` | 15 |
-| Skills | `.cursor/skills/` | 15 |
+| Skills | `.cursor/skills/` | 16 |
 | Rules | `.cursor/rules/` | 11 |
 | KBs | `.cursor/kb/` | 8 domínios |
 | Commands | `.cursor/commands/` | 3 (novo-projeto, validar, scorecard) |
@@ -52,6 +52,7 @@ Todos os artefatos estão espelhados em `.cursor/` para acesso via `@`-mention:
 @.cursor/skills/install-harness/SKILL.md   → processo de install em outro projeto
 @.cursor/skills/harness-architect/SKILL.md → montar .claude/ de um projeto
 @.cursor/skills/grill-me/SKILL.md          → aprofundar requisitos
+@.cursor/skills/excalidraw-diagram/SKILL.md → gerar diagramas Excalidraw com argumentação visual
 @.cursor/kb/fastapi/                        → KB de FastAPI
 @.cursor/kb/langgraph/                      → KB de LangGraph
 @.cursor/kb/rag/                            → KB de RAG e busca semântica

@@ -124,6 +124,7 @@ Gera retrospectiva em `05-retro.md`, fecha `STATUS.md`, roda `/scorecard`.
 | `/create-rag-pipeline` | Gera pipeline RAG completo (ingestão + query) | Feature de busca semântica do zero |
 | `/search-strategy-check` | Checklist para decidir estratégia de busca correta | Antes de `/create-rag-pipeline` |
 | `/write-a-skill` | Cria nova skill customizada para o projeto | Operação repetível que não tem skill |
+| `/excalidraw-diagram` | Gera diagrama `.excalidraw` com argumentação visual + validação PNG | Visualizar arquiteturas, fluxos e conceitos |
 
 ---
 
@@ -163,3 +164,4 @@ agent-creator       # cria agente para responsabilidade nova
 | `agent-creator` | Criar agente novo |
 | `/new-adr` | Registrar decisão |
 | `/install-harness` | Atualizar harness |
+| `/excalidraw-diagram` | Gerar diagrama visual argumentativo |

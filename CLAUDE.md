@@ -41,7 +41,7 @@ revisor-codigo      # revisar diff antes de "commitar" evolução
 | O que | Onde | Qtd |
 |---|---|---|
 | Agents | `.claude/agents/` | 15 |
-| Skills | `.claude/skills/` | 15 |
+| Skills | `.claude/skills/` | 16 |
 | Rules | `.claude/rules/` | 11 |
 | KBs | `.claude/kb/` | 8 domínios |
 | Commands | `.claude/commands/` | 3 (novo-projeto, validar, scorecard) |
