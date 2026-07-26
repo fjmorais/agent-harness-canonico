@@ -6,7 +6,7 @@ conversa com o Claude Code. Para o fluxo conversacional (dentro do Claude Code),
 
 ## Pré-requisitos
 
-- Python 3.10+ (sem dependências externas — só stdlib)
+- Python 3.11+ (usa `tomllib` da stdlib pra parse de `pyproject.toml`/lockfiles — sem dependência externa)
 - Path do canônico: `/home/fabiano/agent-harness-canonico` (default; use `--canonical` para outro)
 
 ## Modo rápido (recomendado) — `./install-harness`
@@ -26,10 +26,14 @@ Ele pergunta, em ordem:
    (`NOVO`/`SEM_HARNESS`/`ATUALIZAÇÃO`) sozinho, então essa escolha não muda o comportamento, só
    contextualiza o que vem a seguir.
 2. Caminho do projeto de destino (Enter usa a pasta atual).
+3. Forçar todas as categorias mesmo sem stack detectada `[s/N]` — responda `s` pra aplicar
+   `--force-all` (ver seção abaixo); Enter/`n` mantém só o que foi detectado de verdade.
 
 Depois disso, delega tudo — detecção, Install Plan, perguntas de conflito, confirmação final —
 para o mesmo motor descrito abaixo. Se o canônico não estiver no path default, aponte com
-`HARNESS_CANONICAL=/outro/path ./install-harness`.
+`HARNESS_CANONICAL=/outro/path ./install-harness`. Qualquer flag extra passada pro launcher
+(`./install-harness --force-category langgraph`, por exemplo) é repassada direto pro
+`install_harness.py`.
 
 ## Modo avançado — chamando `install_harness.py` direto (flags, `--json`, automação)
 
@@ -43,9 +47,39 @@ python3 /home/fabiano/agent-harness-canonico/.claude/skills/install-harness/scri
 - Se a pasta não existir, a CLI pergunta se deve criar (`mkdir -p`).
 - Detecta modo `NOVO` (sem `.claude/` ou vazia) → nenhum conflito, só imprime o Install Plan e pede
   confirmação final antes de escrever.
-- Se o projeto já tiver `pyproject.toml`/`package.json` com libs conhecidas (fastapi, langgraph,
-  supabase, qdrant/pgvector, langfuse, airflow/spark/dbt, tenant/rls), a stack correspondente entra
-  no plano automaticamente.
+- Se o projeto já tiver dependência de uma lib conhecida (langgraph, supabase, qdrant/pgvector,
+  langfuse, airflow/spark/dbt, tenant/rls — a lista completa vive em `scripts/stack_map.json`,
+  categorias `keyword_in_files`), a stack correspondente entra no plano automaticamente. A detecção
+  faz parse real de `pyproject.toml`/`package.json` (lista de dependências, não o arquivo inteiro) e
+  também olha `uv.lock`/`poetry.lock`/`package-lock.json`/`requirements.txt` quando existem — um
+  lockfile é sinal mais forte que o declarado, porque reflete o que de fato está instalado.
+
+### Stack não detectada mas você quer instalar mesmo assim — `--force-category` / `--force-all`
+
+Às vezes a stack ainda não está no `pyproject.toml`/`package.json` (projeto recém-iniciado, ou
+dependência ainda não declarada) mas você já sabe que vai usar. Duas formas:
+
+```bash
+# força só as categorias específicas que quiser (repetível)
+python3 .../install_harness.py ~/meu-projeto --force-category langgraph --force-category rag_vetorial
+
+# força TODAS as categorias puladas de uma vez — não precisa listar nome nenhum
+python3 .../install_harness.py ~/meu-projeto --force-all
+```
+
+Os nomes de categoria pro `--force-category` são os mesmos do `stack_map.json`
+(`python_fastapi`, `langgraph`, `supabase`, `react_frontend`, `multi_tenant`, `observabilidade`,
+`rag_vetorial`, `pipeline_dados`). Rode com `--dry-run` primeiro pra ver a lista de categorias
+puladas (`Categorias puladas por falta de stack detectada: ...`) antes de decidir o que forçar —
+ou pule direto pro `--force-all` se quiser tudo. No Install Plan, o item forçado aparece marcado
+`[forçado — sem stack detectada]`, pra deixar claro que não foi detecção automática. Via
+`./install-harness` (launcher guiado), o mesmo `--force-all` está disponível como pergunta
+interativa (`Forçar todas as categorias...? [s/N]`), sem precisar decorar a flag.
+
+> **Se você já tinha tentado `--force-category`/`--force-all` antes e não funcionou:** era um bug
+> do próprio `./install-harness` (o wrapper bash não repassava argumentos extras pro script Python)
+> — corrigido. Se ainda usa uma cópia antiga do launcher, atualize-a ou chame
+> `install_harness.py` direto.
 
 ## 2. Atualizar um projeto que já existe (com ou sem harness)
 

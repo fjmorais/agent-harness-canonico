@@ -100,10 +100,34 @@ Cada item tem `path`, `kind` (`copy`/`generate`/`scaffold`) e `action`:
 
 A tabela stack→artefatos (categorias Foundation/Dev workflow/Code quality sempre + 8 blocos
 condicionais por stack) vive em `scripts/stack_map.json` — é a fonte única; não a duplique aqui.
+As keywords de detecção (`langgraph`, `dbt`, `airflow`, ...) também vêm só de lá — o script deriva
+o vocabulário do próprio `stack_map.json`, não há lista duplicada em nenhum lugar.
 
 Monte e apresente o Install Plan em markdown a partir do JSON, agrupando por `action` (mesmo
 espírito de antes: COPIAR / GERAR / SCAFFOLD / ATUALIZAR / PULAR / NÃO TOCAR / CONFLITOS).
-**Aguarde confirmação antes de prosseguir** para o Passo 2.
+**Aguarde confirmação antes de prosseguir** para o Passo 1.5.
+
+### Passo 1.5 — Oferecer forçar categoria não detectada
+
+Se o JSON tiver algum item com `action: "SKIP_STACK"`, colete as categorias distintas puladas:
+
+```bash
+python3 -c "
+import json
+d = json.load(open('/tmp/install-harness-plan.json'))
+print(sorted({i['category'] for i in d['items'] if i['action'] == 'SKIP_STACK'}))
+"
+```
+
+Se a lista não for vazia, pergunte via `AskUserQuestion` se o usuário quer incluir alguma delas
+mesmo sem a stack ter sido detectada (ex.: projeto novo que ainda não tem
+`pyproject.toml`/`package.json` com a dependência, mas já sabe que vai usar). Ofereça 3 opções:
+- **Nenhuma** — segue com o plano como está
+- **Escolher categorias** (multiSelect com a lista coletada acima) — re-rode o Passo 1 com
+  `--force-category NOME` (repetível) por categoria escolhida
+- **Todas** — re-rode o Passo 1 com `--force-all` (mais simples que listar cada uma)
+
+Depois de re-rodar, substitua o Install Plan pelo novo resultado antes de seguir.
 
 ### Passo 2 — Resolver conflitos com o usuário
 

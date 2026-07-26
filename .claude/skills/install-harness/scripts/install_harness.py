@@ -3,16 +3,19 @@
 
 Uso:
     python3 install_harness.py <destino> [--canonical PATH] [--dry-run] [--yes] [--json]
+                                [--force-category NOME ...]
 
 Roda sozinha, sem depender do Claude Code — Python 3 stdlib apenas, sem dependências.
 Nunca sobrescreve um arquivo existente sem confirmação explícita do usuário.
 
 Fluxo:
-  1. detect_mode()       -> NOVO | SEM_HARNESS | ATUALIZACAO
-  2. detect_stack()      -> sinais de stack (pyproject/package.json/keywords)
-  3. build_plan()        -> classifica cada artefato do stack_map.json
-  4. resolve_conflicts   -> interativo (input()) ou via --decisions-file (--json)
-  5. apply_plan()        -> copia/gera/scaffold, espelha .cursor/, grava manifest
+  1. detect_mode()          -> NOVO | SEM_HARNESS | ATUALIZACAO
+  2. collect_keywords()     -> vocabulário de keywords derivado do stack_map.json (não hardcoded)
+  3. detect_stack_signals() -> parse de pyproject.toml/package.json/lockfiles + fallback textual
+  4. build_plan()           -> classifica cada artefato do stack_map.json (--force-category
+                                inclui categoria mesmo sem stack detectada)
+  5. resolve_conflicts      -> interativo (input()) ou via --decisions-file (--json)
+  6. apply_plan()           -> copia/gera/scaffold, espelha .cursor/, grava manifest
 """
 from __future__ import annotations
 
@@ -20,14 +23,16 @@ import argparse
 import difflib
 import filecmp
 import json
+import re
 import shutil
 import sys
+import tomllib
 from datetime import date
 from pathlib import Path
 
 DEFAULT_CANONICAL = "/home/fabiano/agent-harness-canonico"
 MANIFEST_REL = ".claude/harness-manifest.json"
-KEYWORD_FILES = ["pyproject.toml", "package.json"]
+KEYWORD_FILES = ["pyproject.toml", "package.json"]  # fallback: scan bruto se o parse estruturado falhar
 
 
 # --------------------------------------------------------------------------- detecção
@@ -51,13 +56,128 @@ def detect_mode(target: Path, manifest: dict | None) -> str:
     return "ATUALIZACAO"
 
 
-def detect_stack_signals(target: Path) -> dict:
+def collect_keywords(stack_map: dict) -> set[str]:
+    """Deriva o vocabulário de keywords do stack_map.json — nunca hardcoded em duplicata.
+    Adicionar uma categoria keyword_in_files nova no stack_map já basta; nada a tocar aqui."""
+    keywords: set[str] = set()
+    for category in stack_map["categories"]:
+        condition = category["condition"]
+        if condition["type"] == "keyword_in_files":
+            keywords.update(condition["keywords"])
+    return keywords
+
+
+def _dep_name(raw: str) -> str:
+    """'fastapi[standard]>=0.100,<1.0' -> 'fastapi'. 'requests ; python_version<"3.9"' -> 'requests'."""
+    return re.split(r"[<>=!\[\];~\s(]", raw.strip(), maxsplit=1)[0].strip().lower()
+
+
+def _names_from_pyproject(path: Path) -> set[str]:
+    try:
+        data = tomllib.loads(path.read_text(encoding="utf-8"))
+    except (tomllib.TOMLDecodeError, OSError, UnicodeDecodeError):
+        return set()
+    names: set[str] = set()
+    project = data.get("project", {})
+    for dep in project.get("dependencies", []) or []:
+        names.add(_dep_name(dep))
+    for group in (project.get("optional-dependencies") or {}).values():
+        for dep in group or []:
+            names.add(_dep_name(dep))
+    poetry = data.get("tool", {}).get("poetry", {})
+    for key in ("dependencies", "dev-dependencies"):
+        for pkg_name in (poetry.get(key) or {}):
+            if pkg_name.lower() != "python":
+                names.add(pkg_name.lower())
+    for group in (poetry.get("group") or {}).values():
+        for pkg_name in (group.get("dependencies") or {}):
+            names.add(pkg_name.lower())
+    uv_dev = data.get("tool", {}).get("uv", {}).get("dev-dependencies", []) or []
+    for dep in uv_dev:
+        names.add(_dep_name(dep))
+    return names
+
+
+def _names_from_package_json(path: Path) -> set[str]:
+    try:
+        data = json.loads(path.read_text(encoding="utf-8"))
+    except (json.JSONDecodeError, OSError, UnicodeDecodeError):
+        return set()
+    names: set[str] = set()
+    for key in ("dependencies", "devDependencies", "peerDependencies", "optionalDependencies"):
+        names.update(pkg.lower() for pkg in (data.get(key) or {}))
+    return names
+
+
+def _names_from_toml_lockfile(path: Path) -> set[str]:
+    """uv.lock / poetry.lock — ambos TOML com [[package]] name = '...'."""
+    try:
+        data = tomllib.loads(path.read_text(encoding="utf-8"))
+    except (tomllib.TOMLDecodeError, OSError, UnicodeDecodeError):
+        return set()
+    return {pkg["name"].lower() for pkg in data.get("package", []) or [] if pkg.get("name")}
+
+
+def _names_from_package_lock_json(path: Path) -> set[str]:
+    try:
+        data = json.loads(path.read_text(encoding="utf-8"))
+    except (json.JSONDecodeError, OSError, UnicodeDecodeError):
+        return set()
+    names: set[str] = set()
+    for key in (data.get("packages") or {}):
+        # chaves tipo "node_modules/pkg" ou "node_modules/@scope/pkg"
+        leaf = key.rsplit("node_modules/", 1)[-1]
+        if leaf:
+            names.add(leaf.lower())
+    names.update(pkg.lower() for pkg in (data.get("dependencies") or {}))
+    return names
+
+
+def _names_from_requirements_txt(path: Path) -> set[str]:
+    names: set[str] = set()
+    try:
+        lines = path.read_text(encoding="utf-8", errors="ignore").splitlines()
+    except OSError:
+        return names
+    for line in lines:
+        line = line.strip()
+        if not line or line.startswith(("#", "-")):
+            continue
+        names.add(_dep_name(line))
+    return names
+
+
+def detect_stack_signals(target: Path, keywords: set[str]) -> dict:
+    """Sinais de stack do projeto-alvo. Parse estruturado (TOML/JSON) das listas de
+    dependência declaradas + lockfiles (sinal mais forte que o declarado) primeiro;
+    scan de texto bruto como rede de segurança para formato não-padrão/malformado."""
     signals = {
         "pyproject": (target / "pyproject.toml").exists(),
         "package_json": (target / "package.json").exists(),
         "docker_compose": (target / "docker-compose.yml").exists(),
         "keywords": set(),
     }
+
+    dep_names: set[str] = set()
+    if signals["pyproject"]:
+        dep_names |= _names_from_pyproject(target / "pyproject.toml")
+    if signals["package_json"]:
+        dep_names |= _names_from_package_json(target / "package.json")
+    if (target / "requirements.txt").exists():
+        dep_names |= _names_from_requirements_txt(target / "requirements.txt")
+    if (target / "uv.lock").exists():
+        dep_names |= _names_from_toml_lockfile(target / "uv.lock")
+    if (target / "poetry.lock").exists():
+        dep_names |= _names_from_toml_lockfile(target / "poetry.lock")
+    if (target / "package-lock.json").exists():
+        dep_names |= _names_from_package_lock_json(target / "package-lock.json")
+
+    for kw in keywords:
+        if any(kw == name or kw in name for name in dep_names):
+            signals["keywords"].add(kw)
+
+    # rede de segurança: scan de texto bruto (pega o que o parse estruturado não cobre —
+    # formato não-padrão, dependência mencionada em comentário/script, etc.)
     for fname in KEYWORD_FILES:
         fpath = target / fname
         if not fpath.exists():
@@ -66,10 +186,10 @@ def detect_stack_signals(target: Path) -> dict:
             text = fpath.read_text(encoding="utf-8", errors="ignore").lower()
         except OSError:
             continue
-        for kw in ("langgraph", "fastapi", "supabase", "langfuse", "qdrant",
-                   "pgvector", "airflow", "spark", "dbt", "tenant", "rls"):
+        for kw in keywords:
             if kw in text:
                 signals["keywords"].add(kw)
+
     return signals
 
 
@@ -112,13 +232,16 @@ def paths_differ(a: Path, b: Path) -> bool:
         return True
 
 
-def build_plan(target: Path, canonical: Path, stack_map: dict, manifest: dict | None) -> list[dict]:
+def build_plan(target: Path, canonical: Path, stack_map: dict, manifest: dict | None,
+               signals: dict, force_categories: frozenset[str] = frozenset(),
+               force_all: bool = False) -> list[dict]:
     artefacts = (manifest or {}).get("artefacts", {})
     plan: list[dict] = []
-    signals = detect_stack_signals(target)
 
     for category in stack_map["categories"]:
-        matched = condition_matches(category["condition"], signals)
+        detected = condition_matches(category["condition"], signals)
+        forced = not detected and (force_all or category["name"] in force_categories)
+        matched = detected or forced
         for artefact in category["artifacts"]:
             rel = artefact["path"]
             kind = artefact["kind"]
@@ -130,6 +253,8 @@ def build_plan(target: Path, canonical: Path, stack_map: dict, manifest: dict | 
                 "category": category["name"],
                 "exists": dest.exists(),
             }
+            if forced:
+                item["forced"] = True
 
             if not matched:
                 item["action"] = "SKIP_STACK"
@@ -518,8 +643,13 @@ def print_plan_human(plan: list[dict], mode: str, signals: dict) -> None:
         print(f"## {label}")
         for i in items:
             note = f" ← {i['note']}" if i.get("note") else ""
-            print(f"- {i['path']}{note}")
+            forced = " [forçado — sem stack detectada]" if i.get("forced") else ""
+            print(f"- {i['path']}{note}{forced}")
         print()
+    skipped_categories = sorted({i["category"] for i in plan if i["action"] == "SKIP_STACK"})
+    if skipped_categories:
+        print(f"Categorias puladas por falta de stack detectada: {', '.join(skipped_categories)}")
+        print("Para incluir mesmo assim: --force-category NOME (repetível)\n")
 
 
 def plan_to_json(plan: list[dict], mode: str, signals: dict) -> dict:
@@ -545,6 +675,11 @@ def main() -> None:
     parser.add_argument("--yes", action="store_true", help="modo não-interativo: mantém tudo que já existe (nunca sobrescreve)")
     parser.add_argument("--json", action="store_true", help="imprime o plano em JSON; usa --decisions-file para aplicar")
     parser.add_argument("--decisions-file", help="JSON {path: keep|overwrite|merge} para resolver conflitos sem prompt")
+    parser.add_argument("--force-category", action="append", default=[], metavar="NOME",
+                         help="inclui a categoria mesmo sem stack detectada (repetível, ex.: "
+                              "--force-category langgraph --force-category rag_vetorial)")
+    parser.add_argument("--force-all", action="store_true",
+                         help="inclui TODAS as categorias mesmo sem stack detectada (sobrepõe --force-category)")
     args = parser.parse_args()
 
     canonical = Path(args.canonical).resolve()
@@ -569,9 +704,11 @@ def main() -> None:
 
     manifest = read_manifest(target)
     mode = detect_mode(target, manifest)
-    signals = detect_stack_signals(target)
     stack_map = load_stack_map(canonical)
-    plan = build_plan(target, canonical, stack_map, manifest)
+    keywords = collect_keywords(stack_map)
+    signals = detect_stack_signals(target, keywords)
+    force_categories = frozenset(args.force_category)
+    plan = build_plan(target, canonical, stack_map, manifest, signals, force_categories, args.force_all)
 
     if args.json:
         print(json.dumps(plan_to_json(plan, mode, signals), indent=2, ensure_ascii=False))

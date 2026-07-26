@@ -95,4 +95,11 @@ read -rp "Caminho do projeto de destino (Enter para $(pwd)): " destino
 destino="${destino:-$(pwd)}"
 
 echo
-exec python3 "$SCRIPT" "$destino"
+read -rp "Forçar TODAS as categorias mesmo sem stack detectada? [s/N]: " force_all
+extra_args=()
+if [[ "$force_all" =~ ^[sS]$ ]]; then
+  extra_args+=(--force-all)
+fi
+
+echo
+exec python3 "$SCRIPT" "$destino" "${extra_args[@]}" "$@"
