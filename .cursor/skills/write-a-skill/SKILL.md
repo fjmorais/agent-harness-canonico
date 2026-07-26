@@ -15,7 +15,7 @@ description: Create new agent skills with proper structure, progressive disclosu
 
 2. **Draft the skill** - create:
    - SKILL.md with concise instructions
-   - Additional reference files if content exceeds 500 lines
+   - Additional reference files if content exceeds 100 lines
    - Utility scripts if deterministic operations needed
 
 3. **Review with user** - present draft and ask:
@@ -105,6 +105,14 @@ Split into separate files when:
 - Content has distinct domains (finance vs sales schemas)
 - Advanced features are rarely needed
 
+## Mirroring to `.cursor/`
+
+This harness keeps `.claude/` and `.cursor/` as identical copies (Cursor reads skills via
+`@`-mention, it doesn't execute them natively). After creating or editing anything under
+`.claude/skills/{skill-name}/`, copy the same files byte-for-byte to `.cursor/skills/{skill-name}/`
+— no format conversion needed (skills, unlike `rules/`, mirror as-is). Verify with
+`diff -rq .claude/skills/{skill-name} .cursor/skills/{skill-name}` before finishing.
+
 ## Review Checklist
 
 After drafting, verify:
@@ -115,3 +123,4 @@ After drafting, verify:
 - [ ] Consistent terminology
 - [ ] Concrete examples included
 - [ ] References one level deep
+- [ ] Mirrored to `.cursor/skills/{skill-name}/`

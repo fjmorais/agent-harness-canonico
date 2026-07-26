@@ -16,6 +16,27 @@ tools: Read, Write, Edit, Bash
 Instala o agent harness canônico num projeto alvo — novo ou existente.
 **Regra central:** mostrar o Install Plan e confirmar antes de tocar qualquer arquivo.
 
+**Motor determinístico:** a detecção, o plano e a aplicação de arquivos rodam via
+`scripts/install_harness.py` — não improvise `find`/`grep`/`cp` livres. O script também funciona
+como **CLI standalone**, fora de uma sessão Claude Code — via o launcher guiado na raiz do
+canônico (`install-harness` e `INSTALL-HARNESS-CLI.md` são ferramentas de instalação do próprio
+canônico — **não** são propagados para o projeto de destino):
+
+```bash
+./install-harness
+```
+
+ou chamando o script direto, com flags (ver `/INSTALL-HARNESS-CLI.md`):
+
+```bash
+python3 /home/fabiano/agent-harness-canonico/.claude/skills/install-harness/scripts/install_harness.py <destino>
+```
+
+Rodado assim, ele mesmo pergunta interativamente (`input()`) por conflitos — útil para quem quer
+instalar/atualizar o harness num projeto sem abrir uma conversa com o Claude. Dentro desta skill,
+use o modo `--json` (Passo 1 abaixo), porque a ferramenta `Bash` do Claude não repassa um TTY
+interativo ao usuário.
+
 ## Canonical path
 
 Canônico fixo: `/home/fabiano/agent-harness-canonico`
@@ -55,114 +76,64 @@ Se o usuário responder "não sei ainda", "pular" ou deixar em branco: gerar `CO
 esqueleto vazio (formato anterior). Se responder com conteúdo: pré-popular as seções conforme
 o template de execução do Passo 4.
 
-### Passo 1 — Detectar estado do projeto alvo
+### Passo 1 — Rodar o motor (`--json`) e montar o Install Plan
 
 ```bash
-# Substitua TARGET pela pasta de destino confirmada no Passo 0
 TARGET="/path/confirmado/pelo/usuario"
+CANONICAL="/home/fabiano/agent-harness-canonico"
+SCRIPT="$CANONICAL/.claude/skills/install-harness/scripts/install_harness.py"
 
-# Detecta harness existente
-find "$TARGET/.claude/" -type f 2>/dev/null | head -20
-cat "$TARGET/.claude/harness-manifest.json" 2>/dev/null || echo "SEM_MANIFEST"
-
-# Detecta stack
-ls "$TARGET/pyproject.toml" "$TARGET/package.json" "$TARGET/docker-compose.yml" 2>/dev/null
-grep -r "langgraph\|fastapi\|supabase\|langfuse\|qdrant\|pgvector\|airflow\|spark\|dbt" \
-  "$TARGET/pyproject.toml" "$TARGET/package.json" 2>/dev/null | head -20
+python3 "$SCRIPT" "$TARGET" --json > /tmp/install-harness-plan.json
 ```
 
-Classifique em um dos três modos:
+A saída é `{"mode": "NOVO|SEM_HARNESS|ATUALIZAÇÃO", "stack_signals": {...}, "items": [...]}`.
+Cada item tem `path`, `kind` (`copy`/`generate`/`scaffold`) e `action`:
 
-| Modo | Critério | O que fazer |
-|---|---|---|
-| `NOVO` | Sem `.claude/` ou pasta vazia | Scaffolding completo do zero |
-| `SEM_HARNESS` | `.claude/` existe mas sem manifest | Instala o que falta, preserva o que existe |
-| `ATUALIZAÇÃO` | `harness-manifest.json` presente | Compara manifest vs canônico, atualiza não-customizados |
+| `action` | Significado |
+|---|---|
+| `COPY` / `GENERATE` / `SCAFFOLD` | Não existe no destino — será criado |
+| `AUTO_UPDATE` | Existe, `customized:false` no manifest, canônico mudou — atualiza sem perguntar |
+| `UP_TO_DATE` | Existe e já é igual ao canônico — nada a fazer |
+| `KEEP` | Existe e está protegido (`customized:true` ou é scaffold já existente) — nunca toca |
+| `SKIP_STACK` | Stack não detectada para esse artefato |
+| `CONFLICT` | Existe, **não** está rastreado no manifest — precisa perguntar ao usuário |
 
-### Passo 2 — Mapear artefatos relevantes
+A tabela stack→artefatos (categorias Foundation/Dev workflow/Code quality sempre + 8 blocos
+condicionais por stack) vive em `scripts/stack_map.json` — é a fonte única; não a duplique aqui.
 
-Leia `references/install-manifest-schema.md` para o schema do manifest.
-Use a tabela abaixo para decidir o que instalar com base na stack detectada:
+Monte e apresente o Install Plan em markdown a partir do JSON, agrupando por `action` (mesmo
+espírito de antes: COPIAR / GERAR / SCAFFOLD / ATUALIZAR / PULAR / NÃO TOCAR / CONFLITOS).
+**Aguarde confirmação antes de prosseguir** para o Passo 2.
 
-| Categoria | Artefatos do canônico | Condição |
-|---|---|---|
-| **Foundation** (sempre) | CLAUDE.md¹, AGENTS.md¹, CONTEXT.md¹, HARNESS-GUIDE.md³, settings.json¹, HANDOFF.md¹, commands/root³, .claude/design/³, .claude/projetos/³, `.cursor/rules/`² | Sempre |
-| **Dev workflow** (sempre) | skills: harness-architect, grill-me, grill-with-docs, to-prd, to-tasks, to-issues, new-adr, sync-context, make-readme, handoff, write-a-skill | Sempre — copiar do canônico |
-| **Code quality** (sempre) | skills: gen-tests; rules: estilo-codigo, testes, seguranca, definicao-de-pronto; agents: codebase-explorer, revisor-codigo, meeting-analyst | Sempre — copiar do canônico |
-| **Python/FastAPI** | kb/fastapi/, rules/backend.md, agents/sql-architect.md | `pyproject.toml` detectado |
-| **LangGraph** | kb/langgraph/, rules/langgraph.md, agents/prompt-engineer.md, agents/rag-architect.md | `langgraph` em deps |
-| **Supabase** | kb/supabase/ | `supabase` em deps |
-| **React/Frontend** | rules/frontend.md, kb/testing/patterns/vitest-patterns.md | `package.json` detectado |
-| **Multi-tenant** | kb/multi-tenant/, rules/multi-tenant.md | Estrutura ou deps sugerem (`rls`, `tenant`) |
-| **Observabilidade** | kb/observabilidade/ | `langfuse` em deps |
-| **RAG/Vetorial** | kb/rag/, rules/rag.md, agents/rag-architect.md, agents/search-strategy-advisor.md | `qdrant` ou `pgvector` em deps |
-| **Pipeline/dados** | kb/pipeline/, rules/pipeline.md | `airflow`, `spark` ou `dbt` em deps |
+### Passo 2 — Resolver conflitos com o usuário
 
-¹ Arquivo gerado (não copiado) — usa a stack e nome do projeto detectados.
-² `.cursor/rules/` é espelho das `.claude/rules/` instaladas, convertido para formato Cursor (`.mdc`).
-³ Copiado/criado do canônico — não gerado. Para `commands/root`: apenas os 3 arquivos raiz
-  (`novo-projeto.md`, `scorecard.md`, `validar.md`), nunca toca subdirs do target. Para `design/`
-  e `projetos/`: cria scaffold de pastas vazio se não existir; não sobrescreve conteúdo existente.
+Para cada item com `action: "CONFLICT"`:
+- Leia o arquivo/pasta existente no destino e o equivalente no canônico (`Read` em ambos, ou
+  resuma para pastas) para dar contexto real na pergunta — não pergunte às cegas.
+- Pergunte via `AskUserQuestion` (agrupe até 4 conflitos por chamada) com 3 opções:
+  - **keep** — não mexe no arquivo do destino
+  - **overwrite** — substitui pelo conteúdo do canônico (ou pelo stub gerado, se `kind: generate`)
+  - **merge** — grava o conteúdo canônico ao lado, em `<path>.harness-incoming`, e **nunca** toca
+    no arquivo original (reconciliação manual do usuário depois)
 
-### Passo 3 — Montar e apresentar o Install Plan
+Monte `{"path": "resolution", ...}` com as respostas e grave em `/tmp/install-harness-decisions.json`.
 
-Apresente ANTES de qualquer escrita:
+### Passo 3 — Aplicar (somente após confirmação)
 
-```
-# Install Plan — [nome do projeto detectado]
-
-## Modo: NOVO | SEM_HARNESS | ATUALIZAÇÃO
-
-## COPIAR do canônico (framework)
-- HARNESS-GUIDE.md                             [NOVO] ← referência de uso do harness
-- .claude/commands/novo-projeto.md             [NOVO] ← harness entrypoint
-- .claude/commands/scorecard.md                [NOVO] ← métricas de entrega
-- .claude/commands/validar.md                  [NOVO] ← gate rápido
-- .claude/design/                              [SCAFFOLD] ← features/, archive/, reports/
-- .claude/projetos/                            [SCAFFOLD] ← gestão de projetos
-- .claude/agents/codebase-explorer.md          [NOVO]
-- .claude/skills/harness-architect/            [NOVO]
-- .claude/kb/fastapi/                          [NOVO] ← pyproject.toml + fastapi detectados
-- .claude/rules/langgraph.md                   [NOVO] ← langgraph em deps
-
-## GERAR (projeto-específico)
-- CLAUDE.md                                    [GERAR com stack detectada]
-- AGENTS.md                                    [GERAR espelho portátil — Cursor/Windsurf/Codex]
-- CONTEXT.md                                   [GERAR com domínio coletado no Passo 0.5]
-- settings.json                                [GERAR com hooks da stack]
-- HANDOFF.md                                   [TEMPLATE]
-- .cursor/rules/estilo-codigo.mdc              [GERAR espelho de .claude/rules/estilo-codigo.md]
-- .cursor/rules/testes.mdc                     [GERAR espelho de .claude/rules/testes.md]
-- .cursor/rules/seguranca.mdc                  [GERAR espelho de .claude/rules/seguranca.md]
-- .cursor/rules/<stack>.mdc                    [GERAR espelhos das rules de stack instaladas]
-
-## PULAR (stack não detectada)
-- .claude/kb/pipeline/                         (sem airflow/spark/dbt)
-- .claude/rules/pipeline.md
-
-## NÃO TOCAR (já existe ou customizado)
-- CLAUDE.md                                    [MANTÉM — já existe com conteúdo]
-- .claude/agents/revisor-codigo.md             [MANTÉM — manifest: customized=true]
-
-Confirma este plano? (s/n)
+```bash
+python3 "$SCRIPT" "$TARGET" --json --decisions-file /tmp/install-harness-decisions.json
 ```
 
-**Aguarde confirmação antes de prosseguir.**
+Isso copia/gera/scaffolda, espelha `.claude/` → `.cursor/` (rules convertidas para `.mdc`), grava
+os `.harness-incoming` pendentes e atualiza `.claude/harness-manifest.json` — tudo dentro do
+script (ver `references/install-manifest-schema.md` para o schema do manifest). **Nunca** escreva
+esses arquivos via `Write`/`Edit` direto; é o script quem garante o invariante de não sobrescrever
+sem decisão.
 
-### Passo 4 — Executar (somente após confirmação)
-
-**Destino:** sempre use o `TARGET` definido no Passo 0. Nunca escreva no diretório atual se o usuário escolheu outro destino.
-
-**Para arquivos COPIAR:** copie do canônico para `$TARGET`. Se o arquivo já existe e não está no manifest (modo `SEM_HARNESS`), skip sem sobrescrever — liste como `[SKIPPED — já existe]`.
-
-**Para arquivos GERAR:** use os templates de `.claude/skills/harness-architect/references/claude-dir-templates.md`. Preencha com:
-- Nome do projeto: `basename $(pwd)`
-- Stack detectada: resumo de 1 linha
-- Hooks no settings.json: adaptados à stack (Python → ruff + mypy + pytest; JS → eslint + vitest)
-
-**Para `CONTEXT.md` (pré-populado com domínio do Passo 0.5):**
-Se o usuário respondeu as perguntas de domínio, gere no formato abaixo. Se deixou vazio, crie
-apenas o cabeçalho com instrução de preenchimento via `/grill-with-docs`.
+Se o usuário respondeu as perguntas de domínio do Passo 0.5, depois de aplicar sobrescreva
+`CONTEXT.md` (via `Write`, já que é um arquivo `customized: true` que só você, dentro desta
+conversa, deve tocar) com o conteúdo pré-populado abaixo. Se o script já criou um `.harness-incoming`
+para `CONTEXT.md` (conflito resolvido como `merge`), popule esse arquivo em vez do original.
 
 ```markdown
 # Glossário de domínio — [nome do projeto]
@@ -180,7 +151,6 @@ apenas o cabeçalho com instrução de preenchimento via `/grill-with-docs`.
 | Termo | Definição | Sinônimos | O que NÃO é |
 |---|---|---|---|
 | [termo 1] | (preencher com /grill-with-docs) | — | — |
-| [termo 2] | (preencher com /grill-with-docs) | — | — |
 
 (um stub por termo listado na resposta da pergunta 2)
 
@@ -195,92 +165,11 @@ apenas o cabeçalho com instrução de preenchimento via `/grill-with-docs`.
 (respostas da pergunta 4, ou "(preencher com /grill-with-docs)")
 ```
 
-**Para `.cursor/` (espelho estrutural completo):** após instalar tudo em `.claude/`, espelhe em `.cursor/` seguindo a tabela:
-
-| `.claude/` | `.cursor/` | Operação |
-|---|---|---|
-| `rules/*.md` | `rules/*.mdc` | CONVERTER (formato Cursor) |
-| `agents/` | `agents/` | COPIAR igual |
-| `skills/` | `skills/` | COPIAR igual |
-| `kb/` | `kb/` | COPIAR igual |
-| `commands/` | `commands/` | COPIAR igual |
-| `design/` | `design/` | COPIAR igual (features/, archive/, reports/) |
-| `projetos/` | `projetos/` | COPIAR igual |
-| `settings.json` | ❌ | NÃO espelhar |
-| `.mcp.json` | ❌ | NÃO espelhar |
-
-`design/` contém documentos de design de feature (não confundir com SDD = Spec Driven Development, que é uma metodologia). `projetos/` contém o histórico de ciclo de vida de cada projeto.
-
-O Cursor não executa agents, skills ou KB nativamente, mas o usuário pode `@`-mencionar qualquer arquivo: `@.cursor/kb/fastapi/index.md`. A estrutura espelhada mantém tudo acessível.
-
-**Para `commands/` (merge, não sobrescreve estrutura):**
-O canônico tem 3 comandos raiz que são Foundation: `novo-projeto.md`, `scorecard.md`, `validar.md`.
-Se o target já tem `commands/` (com subpastas de outra fonte), fazer MERGE:
-- Copiar os 3 arquivos raiz para `.claude/commands/` e `.cursor/commands/`
-- NÃO tocar subpastas existentes no target
-- Se o arquivo já existe no target, skip sem sobrescrever (exceto modo ATUALIZAÇÃO com `customized: false`)
-
-**Para `.claude/design/` e `.claude/projetos/` (scaffold):**
-- Se não existe: criar a estrutura de pastas; `design/` com `features/`, `archive/`, `reports/`;
-  `projetos/` com o `README.md` do canônico
-- Se já existe: não tocar (pode ter conteúdo do projeto)
-- Espelhar imediatamente para `.cursor/design/` e `.cursor/projetos/`
-
-**Para `.cursor/rules/` (conversão):** para cada `.claude/rules/*.md` instalado, crie o arquivo
-espelho em `.cursor/rules/<mesmo-nome>.mdc` com o formato Cursor:
-
-```
----
-description: [primeira linha de descrição da rule original]
-globs: [paths: da rule original, convertido para array JSON]
-alwaysApply: [true se sem paths:, false se path-scoped]
----
-
-[conteúdo da rule original, sem o frontmatter]
-```
-
-Exemplo — `.claude/rules/backend.md` → `.cursor/rules/backend.mdc`:
-```
----
-description: Regras ao editar o backend FastAPI
-globs: ["backend/**"]
-alwaysApply: false
----
-
-[conteúdo do backend.md a partir daqui]
-```
-
-`AGENTS.md` é gerado como espelho do `CLAUDE.md` sem referências ao `.claude/` — conteúdo:
-stack, comandos, invariantes, "onde fica o quê". Sem rules, hooks ou MCP (inexistentes em Cursor).
-
-**Para modo `ATUALIZAÇÃO`:** só atualiza artefatos com `"customized": false` no manifest onde o arquivo do canônico é mais novo que o instalado.
-
-### Passo 5 — Gravar manifest
-
-Ao final, grave/atualize `.claude/harness-manifest.json`:
-
-```json
-{
-  "canonical_path": "/home/fabiano/agent-harness-canonico",
-  "installed_at": "YYYY-MM-DD",
-  "mode": "NOVO|SEM_HARNESS|ATUALIZAÇÃO",
-  "artefacts": {
-    ".claude/agents/codebase-explorer.md": {
-      "source": "canonical",
-      "customized": false
-    },
-    "CLAUDE.md": {
-      "source": "generated",
-      "customized": true
-    }
-  }
-}
-```
-
-Feche listando os próximos passos obrigatórios:
+Feche listando os próximos passos obrigatórios (o script já imprime isso no modo interativo; no
+modo `--json` reproduza a mesma lista):
 1. `/grill-with-docs` — preencher CONTEXT.md com terminologia real do domínio
 2. `/grill-me` — refinar CLAUDE.md com invariantes específicos do projeto
-3. Revisar hooks em `settings.json` (comandos corretos para a stack)
+3. Revisar hooks em `.claude/settings.json` (comandos corretos para a stack)
 4. `/validar` — confirmar gate verde antes da primeira sessão de build
 
 ---
@@ -293,10 +182,23 @@ Feche listando os próximos passos obrigatórios:
 - **Começa mínimo** — Foundation + workflow sempre; stack-specific só se detectado
 - **CONTEXT.md vem vazio** — nunca preenche com terminologia inventada; isso é papel do `/grill-with-docs`
 - **Manifest é sagrado** — qualquer arquivo sem entrada no manifest é tratado como `customized: true` em futuras atualizações
+- **Escrita só via o script** — detecção, plano, cópia/geração e gravação do manifest passam por
+  `scripts/install_harness.py`; a skill não improvisa `cp`/`Write` para os artefatos que o script
+  já cobre (exceção: `CONTEXT.md` pré-populado no Passo 3, que é conteúdo só desta conversa)
 
 ## Referências
 
+- `scripts/install_harness.py` — motor determinístico (detect/plan/apply); também roda como CLI
+  standalone fora do Claude Code (`python3 install_harness.py <destino>`, sem `--json`)
+- `scripts/stack_map.json` — fonte única da tabela stack → artefatos usada pelo script
+- `/INSTALL-HARNESS-CLI.md` (raiz do canônico) — guia passo a passo para rodar a CLI standalone no
+  terminal. **Não** é propagado para o projeto de destino — é documentação sobre como instalar o
+  harness a partir daqui, não conteúdo do harness em si
+- `/install-harness` (raiz do canônico) — launcher guiado (`./install-harness`). Mesma lógica: fica
+  só no canônico, não é copiado para o destino
 - `references/install-manifest-schema.md` — schema completo do harness-manifest.json
 - `.claude/skills/harness-architect/references/stack-layer-map.md` — mapa stack → artefatos
-- `.claude/skills/harness-architect/references/claude-dir-templates.md` — templates para gerar Foundation
+  (tabela irmã, usada no fluxo de entrevista do `harness-architect`, não pelo install)
+- `.claude/skills/harness-architect/references/claude-dir-templates.md` — templates de referência
+  para os stubs gerados pelo script (`generate_content()`)
 - `.claude/skills/grill-with-docs/SKILL.md` — preenchimento do CONTEXT.md após install

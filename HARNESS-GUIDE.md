@@ -110,7 +110,7 @@ Gera retrospectiva em `05-retro.md`, fecha `STATUS.md`, roda `/scorecard`.
 | Skill (invocação) | O que faz | Quando usar |
 |---|---|---|
 | `/harness-architect` | Entrevista sobre stack → gera `.claude/` completo | Configurar harness de um projeto |
-| `/install-harness` | Instala ou atualiza harness canônico no projeto | Bootstrap ou atualizar quando o canônico evoluiu |
+| `/install-harness` | Instala ou atualiza harness canônico no projeto | Bootstrap ou atualizar quando o canônico evoluiu |¹
 | `/grill-me` | Entrevista relentless sobre plano ou design | Aprofundar ideia antes de virar PRD |
 | `/grill-with-docs` | Grilling contra documentação de domínio existente | Preencher `CONTEXT.md` com especialista |
 | `/to-prd` | Converte conversa em PRD e publica no tracker | Fechar requisitos em documento |
@@ -125,6 +125,12 @@ Gera retrospectiva em `05-retro.md`, fecha `STATUS.md`, roda `/scorecard`.
 | `/search-strategy-check` | Checklist para decidir estratégia de busca correta | Antes de `/create-rag-pipeline` |
 | `/write-a-skill` | Cria nova skill customizada para o projeto | Operação repetível que não tem skill |
 | `/excalidraw-diagram` | Gera diagrama `.excalidraw` com argumentação visual + validação PNG | Visualizar arquiteturas, fluxos e conceitos |
+
+¹ `/install-harness` também roda como **CLI standalone**, fora de uma sessão Claude Code:
+`./install-harness` (launcher guiado — pergunta destino e novo/existente) ou, direto com flags,
+`python3 .claude/skills/install-harness/scripts/install_harness.py <destino>`. Detecta o projeto,
+mostra o Install Plan e pergunta (`input()`) antes de tocar qualquer arquivo que já exista. Veja
+`INSTALL-HARNESS-CLI.md`.
 
 ---
 

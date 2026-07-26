@@ -75,13 +75,13 @@ Use a tabela abaixo para decidir o que instalar com base na stack detectada:
 | **Foundation** (sempre) | CLAUDE.md¹, AGENTS.md¹, CONTEXT.md¹, HARNESS-GUIDE.md³, settings.json¹, HANDOFF.md¹, commands/root³, .claude/design/³, .claude/projetos/³, `.cursor/rules/`² | Sempre |
 | **Dev workflow** (sempre) | skills: harness-architect, grill-me, grill-with-docs, to-prd, to-tasks, to-issues, new-adr, sync-context, make-readme, handoff, write-a-skill | Sempre — copiar do canônico |
 | **Code quality** (sempre) | skills: gen-tests; rules: estilo-codigo, testes, seguranca, definicao-de-pronto; agents: codebase-explorer, revisor-codigo, meeting-analyst | Sempre — copiar do canônico |
-| **Python/FastAPI** | kb/fastapi/, rules/backend.md, agents/sql-architect.md | `pyproject.toml` detectado |
-| **LangGraph** | kb/langgraph/, rules/langgraph.md, agents/prompt-engineer.md, agents/rag-architect.md | `langgraph` em deps |
+| **Python/FastAPI** | kb/fastapi/, rules/backend.md, agents/architect/sql-architect.md | `pyproject.toml` detectado |
+| **LangGraph** | kb/langgraph/, rules/langgraph.md, agents/dev/prompt-engineer.md, agents/architect/rag-architect.md | `langgraph` em deps |
 | **Supabase** | kb/supabase/ | `supabase` em deps |
 | **React/Frontend** | rules/frontend.md, kb/testing/patterns/vitest-patterns.md | `package.json` detectado |
 | **Multi-tenant** | kb/multi-tenant/, rules/multi-tenant.md | Estrutura ou deps sugerem (`rls`, `tenant`) |
 | **Observabilidade** | kb/observabilidade/ | `langfuse` em deps |
-| **RAG/Vetorial** | kb/rag/, rules/rag.md, agents/rag-architect.md, agents/search-strategy-advisor.md | `qdrant` ou `pgvector` em deps |
+| **RAG/Vetorial** | kb/rag/, rules/rag.md, agents/architect/rag-architect.md, agents/architect/search-strategy-advisor.md | `qdrant` ou `pgvector` em deps |
 | **Pipeline/dados** | kb/pipeline/, rules/pipeline.md | `airflow`, `spark` ou `dbt` em deps |
 
 ¹ Arquivo gerado (não copiado) — usa a stack e nome do projeto detectados.
@@ -106,7 +106,7 @@ Apresente ANTES de qualquer escrita:
 - .claude/commands/validar.md                  [NOVO] ← gate rápido
 - .claude/design/                              [SCAFFOLD] ← features/, archive/, reports/
 - .claude/projetos/                            [SCAFFOLD] ← gestão de projetos
-- .claude/agents/codebase-explorer.md          [NOVO]
+- .claude/agents/dev/codebase-explorer.md          [NOVO]
 - .claude/skills/harness-architect/            [NOVO]
 - .claude/kb/fastapi/                          [NOVO] ← pyproject.toml + fastapi detectados
 - .claude/rules/langgraph.md                   [NOVO] ← langgraph em deps
@@ -128,7 +128,7 @@ Apresente ANTES de qualquer escrita:
 
 ## NÃO TOCAR (já existe ou customizado)
 - CLAUDE.md                                    [MANTÉM — já existe com conteúdo]
-- .claude/agents/revisor-codigo.md             [MANTÉM — manifest: customized=true]
+- .claude/agents/dev/revisor-codigo.md             [MANTÉM — manifest: customized=true]
 
 Confirma este plano? (s/n)
 ```
@@ -216,7 +216,7 @@ Ao final, grave/atualize `.claude/harness-manifest.json`:
   "installed_at": "YYYY-MM-DD",
   "mode": "NOVO|SEM_HARNESS|ATUALIZAÇÃO",
   "artefacts": {
-    ".claude/agents/codebase-explorer.md": {
+    ".claude/agents/dev/codebase-explorer.md": {
       "source": "canonical",
       "customized": false
     },

@@ -11,7 +11,7 @@ no projeto alvo. Escrito e lido exclusivamente pelo `/install-harness`.
   "installed_at": "2026-06-27",
   "mode": "NOVO",
   "artefacts": {
-    ".claude/agents/codebase-explorer.md": {
+    ".claude/agents/dev/codebase-explorer.md": {
       "source": "canonical",
       "customized": false
     },
@@ -67,7 +67,7 @@ editou um arquivo do canônico. **Nunca sobrescrever** — listar como `[MANTÉM
 ### Como marcar como customizado
 O usuário pode editar o manifest manualmente:
 ```json
-".claude/agents/revisor-codigo.md": {
+".claude/agents/dev/revisor-codigo.md": {
   "source": "canonical",
   "customized": true
 }

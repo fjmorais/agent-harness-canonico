@@ -119,5 +119,5 @@ mcp__upstash-context-7-mcp__resolve-library-id(libraryName="langchain")
 mcp__upstash-context-7-mcp__get-library-docs(context7CompatibleLibraryId=..., topic="rag")
 
 ### Próximo passo
-`.claude/agents/kb-architect.md` para entender o Agreement Matrix MCP + KB
+`.claude/agents/architect/kb-architect.md` para entender o Agreement Matrix MCP + KB
 ```

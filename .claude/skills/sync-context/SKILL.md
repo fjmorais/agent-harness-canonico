@@ -90,4 +90,4 @@ CONTEXT.md: novo fluxo de autenticação documentado
 
 - `CLAUDE.md` — template de invariantes de projeto
 - `HANDOFF.md` — template de estado de sessão
-- `.claude/agents/codebase-explorer.md` — para mapear o código antes do sync
+- `.claude/agents/dev/codebase-explorer.md` — para mapear o código antes do sync

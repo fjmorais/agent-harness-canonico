@@ -44,7 +44,18 @@
       "Bash(mkdir:*)",
       "Bash(touch:*)",
       "Bash(cp:*)",
-      "Bash(mv:*)"
+      "Bash(mv:*)",
+      "Bash(mkdir -p /home/fabiano/agent-harness-canonico/.claude/kb/dbt/concepts /home/fabiano/agent-harness-canonico/.claude/kb/dbt/patterns *)",
+      "Edit(/.claude/skills/visual-explainer/**)",
+      "Bash(python3 -c ' *)",
+      "Bash(echo \"exit code: $?\")",
+      "Bash(python3 -c \"import yaml; d=yaml.safe_load\\(open\\('/home/fabiano/agent-harness-canonico/.claude/kb/_index.yaml'\\)\\); print\\('OK', 'streaming' in d['domains']\\)\")",
+      "Bash(python3 -c \"import yaml; d=yaml.safe_load\\(open\\('/home/fabiano/agent-harness-canonico/.cursor/kb/_index.yaml'\\)\\); print\\('OK', 'streaming' in d['domains']\\)\")",
+      "Bash(cp /home/fabiano/agent-harness-canonico/.claude/kb/dbt/index.md /home/fabiano/agent-harness-canonico/.cursor/kb/dbt/index.md)",
+      "Bash(cp /home/fabiano/agent-harness-canonico/.claude/kb/dbt/quick-reference.md /home/fabiano/agent-harness-canonico/.cursor/kb/dbt/quick-reference.md)",
+      "Bash(cp /home/fabiano/agent-harness-canonico/.claude/kb/dbt/concepts/*.md /home/fabiano/agent-harness-canonico/.cursor/kb/dbt/concepts/)",
+      "Bash(cp /home/fabiano/agent-harness-canonico/.claude/kb/dbt/patterns/*.md /home/fabiano/agent-harness-canonico/.cursor/kb/dbt/patterns/)",
+      "Bash(echo \"diff exit code: $?\")"
     ],
     "deny": [
       "Bash(rm -rf:*)",
@@ -58,6 +69,9 @@
       "Bash(databricks clusters delete:*)",
       "Bash(git push --force:*)",
       "Bash(git reset --hard:*)"
+    ],
+    "additionalDirectories": [
+      "/home/fabiano/agent-harness-canonico/.claude/kb/dbt"
     ]
   },
   "hooks": {

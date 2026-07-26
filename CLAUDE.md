@@ -40,11 +40,12 @@ revisor-codigo      # revisar diff antes de "commitar" evolução
 
 | O que | Onde | Qtd |
 |---|---|---|
-| Agents | `.claude/agents/` | 15 |
-| Skills | `.claude/skills/` | 16 |
+| Agents | `.claude/agents/` | 27 (4 categorias: `workflow/`, `architect/`, `dev/`, `data-engineering/`) |
+| Skills | `.claude/skills/` | 17 |
 | Rules | `.claude/rules/` | 11 |
-| KBs | `.claude/kb/` | 8 domínios |
-| Commands | `.claude/commands/` | 3 (novo-projeto, validar, scorecard) |
+| KBs | `.claude/kb/` | 17 domínios |
+| Commands | `.claude/commands/` | 18 (4 na raiz + `data-engineering/` + `visual-explainer/`) |
+| Dev Loop | `.claude/dev/` | tasks/progress/logs/templates/examples — ver `DEV-LOOP.md` |
 | Design docs | `.claude/design/` | features/, archive/, reports/ |
 | Projetos do harness | `.claude/projetos/` | histórico de evoluções |
 | Guias HTML | `docs/guia/` | 16 slides (01–16) |
@@ -52,3 +53,5 @@ revisor-codigo      # revisar diff antes de "commitar" evolução
 | Schema do manifest | `.claude/skills/install-harness/references/install-manifest-schema.md` | — |
 | Guia de uso do harness | `HARNESS-GUIDE.md` | — |
 | Setup de template (clone) | `COMO-USAR.md` | — |
+| Guia da CLI de install (standalone) | `INSTALL-HARNESS-CLI.md` | — |
+| Conceito Dev Loop (execução ágil de tarefa pontual) | `DEV-LOOP.md` | — |

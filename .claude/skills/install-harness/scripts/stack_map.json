@@ -1,0 +1,145 @@
+{
+  "_comment": "Fonte única da tabela stack -> artefatos usada por install_harness.py. Espelha o Passo 2 do SKILL.md — se um artefato do canônico mudar de lugar, atualize aqui (o SKILL.md só referencia este arquivo).",
+  "categories": [
+    {
+      "name": "foundation",
+      "label": "Foundation (sempre)",
+      "condition": { "type": "always" },
+      "artifacts": [
+        { "path": "CLAUDE.md", "kind": "generate" },
+        { "path": "AGENTS.md", "kind": "generate" },
+        { "path": "CONTEXT.md", "kind": "generate" },
+        { "path": ".claude/settings.json", "kind": "generate" },
+        { "path": "HANDOFF.md", "kind": "generate" },
+        { "path": "HARNESS-GUIDE.md", "kind": "copy" },
+        { "path": "COMO-USAR.md", "kind": "copy" },
+        { "path": "DEV-LOOP.md", "kind": "copy" },
+        { "path": ".env.example", "kind": "copy" },
+        { "path": ".gitignore", "kind": "copy" },
+        { "path": ".mcp.json", "kind": "copy" },
+        { "path": "requirements.txt", "kind": "copy" },
+        { "path": ".claude/commands/novo-projeto.md", "kind": "copy" },
+        { "path": ".claude/commands/scorecard.md", "kind": "copy" },
+        { "path": ".claude/commands/validar.md", "kind": "copy" },
+        { "path": ".claude/design", "kind": "scaffold" },
+        { "path": ".claude/projetos", "kind": "scaffold" },
+        { "path": ".claude/sdd", "kind": "scaffold" },
+        { "path": "config", "kind": "copy" },
+        { "path": "docs", "kind": "copy" },
+        { "path": "metrics", "kind": "copy" }
+      ]
+    },
+    {
+      "name": "dev_workflow",
+      "label": "Dev workflow (sempre)",
+      "condition": { "type": "always" },
+      "artifacts": [
+        { "path": ".claude/skills/harness-architect", "kind": "copy" },
+        { "path": ".claude/skills/grill-me", "kind": "copy" },
+        { "path": ".claude/skills/grill-with-docs", "kind": "copy" },
+        { "path": ".claude/skills/to-prd", "kind": "copy" },
+        { "path": ".claude/skills/to-tasks", "kind": "copy" },
+        { "path": ".claude/skills/to-issues", "kind": "copy" },
+        { "path": ".claude/skills/new-adr", "kind": "copy" },
+        { "path": ".claude/skills/sync-context", "kind": "copy" },
+        { "path": ".claude/skills/make-readme", "kind": "copy" },
+        { "path": ".claude/skills/handoff", "kind": "copy" },
+        { "path": ".claude/skills/write-a-skill", "kind": "copy" },
+        { "path": ".claude/agents/dev/prompt-crafter.md", "kind": "copy" },
+        { "path": ".claude/agents/dev/dev-loop-executor.md", "kind": "copy" },
+        { "path": ".claude/commands/dev.md", "kind": "copy" },
+        { "path": ".claude/dev", "kind": "copy" }
+      ]
+    },
+    {
+      "name": "code_quality",
+      "label": "Code quality (sempre)",
+      "condition": { "type": "always" },
+      "artifacts": [
+        { "path": ".claude/skills/gen-tests", "kind": "copy" },
+        { "path": ".claude/rules/estilo-codigo.md", "kind": "copy" },
+        { "path": ".claude/rules/testes.md", "kind": "copy" },
+        { "path": ".claude/rules/seguranca.md", "kind": "copy" },
+        { "path": ".claude/rules/definicao-de-pronto.md", "kind": "copy" },
+        { "path": ".claude/agents/dev/codebase-explorer.md", "kind": "copy" },
+        { "path": ".claude/agents/dev/revisor-codigo.md", "kind": "copy" },
+        { "path": ".claude/agents/dev/meeting-analyst.md", "kind": "copy" }
+      ]
+    },
+    {
+      "name": "python_fastapi",
+      "label": "Python/FastAPI",
+      "condition": { "type": "file_exists", "files": ["pyproject.toml"] },
+      "artifacts": [
+        { "path": ".claude/kb/fastapi", "kind": "copy" },
+        { "path": ".claude/rules/backend.md", "kind": "copy" },
+        { "path": ".claude/agents/architect/sql-architect.md", "kind": "copy" }
+      ]
+    },
+    {
+      "name": "langgraph",
+      "label": "LangGraph",
+      "condition": { "type": "keyword_in_files", "keywords": ["langgraph"], "files": ["pyproject.toml", "package.json"] },
+      "artifacts": [
+        { "path": ".claude/kb/langgraph", "kind": "copy" },
+        { "path": ".claude/rules/langgraph.md", "kind": "copy" },
+        { "path": ".claude/agents/dev/prompt-engineer.md", "kind": "copy" },
+        { "path": ".claude/agents/architect/rag-architect.md", "kind": "copy" }
+      ]
+    },
+    {
+      "name": "supabase",
+      "label": "Supabase",
+      "condition": { "type": "keyword_in_files", "keywords": ["supabase"], "files": ["pyproject.toml", "package.json"] },
+      "artifacts": [
+        { "path": ".claude/kb/supabase", "kind": "copy" }
+      ]
+    },
+    {
+      "name": "react_frontend",
+      "label": "React/Frontend",
+      "condition": { "type": "file_exists", "files": ["package.json"] },
+      "artifacts": [
+        { "path": ".claude/rules/frontend.md", "kind": "copy" },
+        { "path": ".claude/kb/testing/patterns/vitest-patterns.md", "kind": "copy" }
+      ]
+    },
+    {
+      "name": "multi_tenant",
+      "label": "Multi-tenant",
+      "condition": { "type": "keyword_in_files", "keywords": ["tenant", "rls"], "files": ["pyproject.toml", "package.json"] },
+      "artifacts": [
+        { "path": ".claude/kb/multi-tenant", "kind": "copy" },
+        { "path": ".claude/rules/multi-tenant.md", "kind": "copy" }
+      ]
+    },
+    {
+      "name": "observabilidade",
+      "label": "Observabilidade",
+      "condition": { "type": "keyword_in_files", "keywords": ["langfuse"], "files": ["pyproject.toml", "package.json"] },
+      "artifacts": [
+        { "path": ".claude/kb/observabilidade", "kind": "copy" }
+      ]
+    },
+    {
+      "name": "rag_vetorial",
+      "label": "RAG/Vetorial",
+      "condition": { "type": "keyword_in_files", "keywords": ["qdrant", "pgvector"], "files": ["pyproject.toml", "package.json"] },
+      "artifacts": [
+        { "path": ".claude/kb/rag", "kind": "copy" },
+        { "path": ".claude/rules/rag.md", "kind": "copy" },
+        { "path": ".claude/agents/architect/rag-architect.md", "kind": "copy" },
+        { "path": ".claude/agents/architect/search-strategy-advisor.md", "kind": "copy" }
+      ]
+    },
+    {
+      "name": "pipeline_dados",
+      "label": "Pipeline/dados",
+      "condition": { "type": "keyword_in_files", "keywords": ["airflow", "spark", "dbt"], "files": ["pyproject.toml", "package.json"] },
+      "artifacts": [
+        { "path": ".claude/kb/pipeline", "kind": "copy" },
+        { "path": ".claude/rules/pipeline.md", "kind": "copy" }
+      ]
+    }
+  ]
+}

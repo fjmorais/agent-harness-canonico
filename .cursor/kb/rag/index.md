@@ -1,3 +1,8 @@
+---
+domain: rag
+description: "RAG e busca semântica/exata — chunking, embedding, hybrid search, reranking, padrão LEDGER"
+---
+
 # RAG + Busca Semântica/Exata — Índice
 
 ## Princípio central
@@ -59,6 +64,11 @@ Pergunta do usuário
 
 - `/create-rag-pipeline` — Gera pipeline RAG completo (ingestão + query)
 - `/search-strategy-check` — Checklist rápido: dado uma info, qual estratégia usar
+
+## Quick Reference
+
+Ver [quick-reference.md](quick-reference.md) — Decision Matrix, invariantes RAG-01…RAG-10,
+setup mínimo de payload index. Ler só se a tarefa exigir esse nível de detalhe.
 
 ## Rule ativa
 

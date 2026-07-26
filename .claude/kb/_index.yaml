@@ -1,0 +1,311 @@
+# Manifesto de KB — índice único de roteamento.
+# Um agente lê ESTE arquivo (ou o index.md do domínio, ~20 linhas de navegação) antes de
+# decidir qual concept/pattern abrir — nunca carrega um domínio inteiro de uma vez.
+# mcp_validated/confidence vêm do frontmatter de cada index.md — null quando o domínio
+# ainda não passou por validação via Context-7 MCP (não inventar data/score aqui).
+version: "1.0"
+last_updated: "2026-07-26"
+
+limits:
+  quick_reference: 100 # linhas, teto por quick-reference.md
+  concept: 150          # linhas, teto por concepts/*.md
+  pattern: 200          # linhas, teto por patterns/*.md
+
+domains:
+  airflow:
+    description: "Apache Airflow 3.x — DAGs com TaskFlow API, scheduling orientado a assets, sensors, XComs, dynamic task mapping, pools/prioridade"
+    path: airflow/
+    mcp_validated: null
+    confidence: null
+    agents: [pipeline-architect]
+    entry_points: {index: index.md, quick_reference: quick-reference.md}
+    concepts:
+      - {name: dag-anatomy, path: concepts/dag-anatomy.md}
+      - {name: asset-scheduling, path: concepts/asset-scheduling.md}
+      - {name: sensors-vs-operators, path: concepts/sensors-vs-operators.md}
+      - {name: xcom-communication, path: concepts/xcom-communication.md}
+    patterns:
+      - {name: idempotent-dag-retry, path: patterns/idempotent-dag-retry.md}
+      - {name: sensor-pattern, path: patterns/sensor-pattern.md}
+      - {name: dynamic-task-mapping, path: patterns/dynamic-task-mapping.md}
+      - {name: pools-priority, path: patterns/pools-priority.md}
+
+  cloud-platforms:
+    description: "Comparativo entre plataformas de dados em nuvem — Snowflake, Databricks, BigQuery: precificação, arquitetura, encaixe por workload, custo"
+    path: cloud-platforms/
+    mcp_validated: null
+    confidence: null
+    agents: [data-platform-engineer]
+    entry_points: {index: index.md, quick_reference: quick-reference.md}
+    concepts:
+      - {name: pricing-models, path: concepts/pricing-models.md}
+      - {name: platform-architectures, path: concepts/platform-architectures.md}
+      - {name: workload-fit, path: concepts/workload-fit.md}
+    patterns:
+      - {name: cost-optimization, path: patterns/cost-optimization.md}
+      - {name: platform-decision-checklist, path: patterns/platform-decision-checklist.md}
+
+  data-modeling:
+    description: "Modelagem dimensional e Data Vault — star/snowflake schema, SCD, grão de fato, bridge tables"
+    path: data-modeling/
+    mcp_validated: null
+    confidence: null
+    agents: [schema-designer]
+    entry_points: {index: index.md, quick_reference: quick-reference.md}
+    concepts:
+      - {name: star-vs-snowflake, path: concepts/star-vs-snowflake.md}
+      - {name: data-vault-2, path: concepts/data-vault-2.md}
+      - {name: scd-types, path: concepts/scd-types.md}
+      - {name: grain-granularity, path: concepts/grain-granularity.md}
+    patterns:
+      - {name: star-schema-design, path: patterns/star-schema-design.md}
+      - {name: scd-type-2, path: patterns/scd-type-2.md}
+      - {name: accumulating-snapshot, path: patterns/accumulating-snapshot.md}
+      - {name: bridge-table, path: patterns/bridge-table.md}
+
+  data-quality:
+    description: "Dimensões de qualidade de dados, data contracts ODCS e observabilidade de pipeline — Great Expectations, Soda, dbt tests, quarentena"
+    path: data-quality/
+    mcp_validated: null
+    confidence: null
+    agents: [data-quality-analyst, data-contracts-engineer]
+    entry_points: {index: index.md, quick_reference: quick-reference.md}
+    concepts:
+      - {name: quality-dimensions, path: concepts/quality-dimensions.md}
+      - {name: data-contracts-odcs, path: concepts/data-contracts-odcs.md}
+      - {name: pipeline-observability, path: concepts/pipeline-observability.md}
+    patterns:
+      - {name: great-expectations-suite, path: patterns/great-expectations-suite.md}
+      - {name: soda-checks, path: patterns/soda-checks.md}
+      - {name: dbt-tests, path: patterns/dbt-tests.md}
+      - {name: quarantine-notification, path: patterns/quarantine-notification.md}
+
+  dbt:
+    description: "dbt — model materializations, estratégias de incremental, testes, dbt Mesh multi-projeto, Fusion Engine"
+    path: dbt/
+    mcp_validated: "2026-07-26"
+    confidence: 0.95
+    agents: [dbt-specialist]
+    entry_points: {index: index.md, quick_reference: quick-reference.md}
+    concepts:
+      - {name: model-materializations, path: concepts/model-materializations.md}
+      - {name: incremental-strategies, path: concepts/incremental-strategies.md}
+      - {name: testing-framework, path: concepts/testing-framework.md}
+      - {name: dbt-mesh, path: concepts/dbt-mesh.md}
+      - {name: fusion-engine, path: concepts/fusion-engine.md}
+    patterns:
+      - {name: incremental-merge-model, path: patterns/incremental-merge-model.md}
+      - {name: snapshot-scd2, path: patterns/snapshot-scd2.md}
+      - {name: custom-generic-test, path: patterns/custom-generic-test.md}
+      - {name: macro-patterns, path: patterns/macro-patterns.md}
+      - {name: semantic-layer-metrics, path: patterns/semantic-layer-metrics.md}
+
+  fastapi:
+    description: "Padrões FastAPI — routers finos, service layer, dependency injection, error contracts, async"
+    path: fastapi/
+    mcp_validated: "2026-06-27"
+    confidence: 0.93
+    agents: []
+    entry_points: {index: index.md, quick_reference: quick-reference.md}
+    concepts:
+      - {name: router-vs-service, path: concepts/router-vs-service.md}
+      - {name: dependency-injection, path: concepts/dependency-injection.md}
+      - {name: async-patterns, path: concepts/async-patterns.md}
+      - {name: error-contracts, path: concepts/error-contracts.md}
+    patterns:
+      - {name: thin-router, path: patterns/thin-router.md}
+      - {name: service-layer, path: patterns/service-layer.md}
+      - {name: health-check, path: patterns/health-check.md}
+      - {name: openapi-contract, path: patterns/openapi-contract.md}
+
+  lakehouse:
+    description: "Open table formats e catálogos de metadados para lakehouse — Iceberg, Delta Lake, Hudi, comparativo agnóstico de vendor"
+    path: lakehouse/
+    mcp_validated: null
+    confidence: null
+    agents: [lakehouse-architect]
+    entry_points: {index: index.md, quick_reference: quick-reference.md}
+    concepts:
+      - {name: open-table-formats, path: concepts/open-table-formats.md}
+      - {name: metadata-catalogs, path: concepts/metadata-catalogs.md}
+      - {name: schema-evolution, path: concepts/schema-evolution.md}
+      - {name: time-travel-versioning, path: concepts/time-travel-versioning.md}
+    patterns:
+      - {name: partition-evolution, path: patterns/partition-evolution.md}
+      - {name: compaction-small-files, path: patterns/compaction-small-files.md}
+      - {name: hive-to-open-format-migration, path: patterns/hive-to-open-format-migration.md}
+      - {name: retention-vacuum, path: patterns/retention-vacuum.md}
+
+  langgraph:
+    description: "Grafos determinísticos com LangGraph — state, nós, tools, human-in-the-loop, multi-agent"
+    path: langgraph/
+    mcp_validated: "2026-06-27"
+    confidence: 0.92
+    agents: [sql-architect, prompt-engineer]
+    entry_points: {index: index.md, quick_reference: quick-reference.md}
+    concepts:
+      - {name: graph-anatomy, path: concepts/graph-anatomy.md}
+      - {name: state-management, path: concepts/state-management.md}
+      - {name: tool-design, path: concepts/tool-design.md}
+      - {name: human-in-the-loop, path: concepts/human-in-the-loop.md}
+    patterns:
+      - {name: deterministic-routing, path: patterns/deterministic-routing.md}
+      - {name: run-sql-tool, path: patterns/run-sql-tool.md}
+      - {name: search-tool, path: patterns/search-tool.md}
+      - {name: interrupt-pattern, path: patterns/interrupt-pattern.md}
+
+  multi-tenant:
+    description: "Padrões de isolamento multi-tenant — RLS, tenant_id, schema separation, pre-filter vetorial"
+    path: multi-tenant/
+    mcp_validated: "2026-06-27"
+    confidence: 0.90
+    agents: [sql-architect]
+    entry_points: {index: index.md, quick_reference: quick-reference.md}
+    concepts:
+      - {name: isolation-models, path: concepts/isolation-models.md}
+      - {name: tenant-context, path: concepts/tenant-context.md}
+    patterns:
+      - {name: rls-multi-tenant, path: patterns/rls-multi-tenant.md}
+      - {name: vector-tenant-isolation, path: patterns/vector-tenant-isolation.md}
+
+  observabilidade:
+    description: "Observabilidade para agentes LLM e pipelines — Langfuse traces, structured logging, métricas por camada"
+    path: observabilidade/
+    mcp_validated: "2026-06-27"
+    confidence: 0.90
+    agents: []
+    entry_points: {index: index.md, quick_reference: quick-reference.md}
+    concepts:
+      - {name: langfuse-traces, path: concepts/langfuse-traces.md}
+      - {name: structured-logging, path: concepts/structured-logging.md}
+      - {name: metrics-by-layer, path: concepts/metrics-by-layer.md}
+    patterns:
+      - {name: trace-llm-call, path: patterns/trace-llm-call.md}
+      - {name: alert-thresholds, path: patterns/alert-thresholds.md}
+
+  pipeline:
+    description: "Conceitos e padrões de engenharia de dados — Medallion, contratos, lineage, schema evolution"
+    path: pipeline/
+    mcp_validated: "2026-06-27"
+    confidence: 0.95
+    agents: [harness-design]
+    entry_points: {index: index.md, quick_reference: quick-reference.md}
+    concepts:
+      - {name: medallion, path: concepts/medallion.md}
+      - {name: data-contracts, path: concepts/data-contracts.md}
+      - {name: schema-evolution, path: concepts/schema-evolution.md}
+      - {name: data-lineage, path: concepts/data-lineage.md}
+      - {name: quarantine, path: concepts/quarantine.md}
+      - {name: observability, path: concepts/observability.md}
+    patterns:
+      - {name: solid-pipeline, path: patterns/solid-pipeline.md}
+      - {name: centralized-config, path: patterns/centralized-config.md}
+      - {name: notification, path: patterns/notification.md}
+      - {name: data-quality, path: patterns/data-quality.md}
+
+  rag:
+    description: "RAG e busca semântica/exata — chunking, embedding, hybrid search, reranking, padrão LEDGER"
+    path: rag/
+    mcp_validated: null
+    confidence: null
+    agents: [rag-architect, search-strategy-advisor, prompt-engineer, sql-architect]
+    entry_points: {index: index.md, quick_reference: quick-reference.md}
+    concepts:
+      - {name: semantic-vs-exact, path: concepts/semantic-vs-exact.md}
+      - {name: rag-architecture, path: concepts/rag-architecture.md}
+      - {name: vector-db-what-not-to-store, path: concepts/vector-db-what-not-to-store.md}
+      - {name: chunking-strategies, path: concepts/chunking-strategies.md}
+      - {name: embedding-selection, path: concepts/embedding-selection.md}
+      - {name: hybrid-search, path: concepts/hybrid-search.md}
+      - {name: reranking, path: concepts/reranking.md}
+      - {name: indexing-techniques, path: concepts/indexing-techniques.md}
+    patterns:
+      - {name: ledger-lookup, path: patterns/ledger-lookup.md}
+      - {name: rag-pipeline, path: patterns/rag-pipeline.md}
+      - {name: query-expansion, path: patterns/query-expansion.md}
+      - {name: metadata-filtering, path: patterns/metadata-filtering.md}
+      - {name: rag-with-keywords, path: patterns/rag-with-keywords.md}
+
+  spark:
+    description: "Apache Spark — modelo de execução distribuída, DataFrame/RDD/SQL, lazy evaluation, tuning de cluster"
+    path: spark/
+    mcp_validated: null
+    confidence: null
+    agents: [spark-engineer]
+    entry_points: {index: index.md, quick_reference: quick-reference.md}
+    concepts:
+      - {name: execution-model, path: concepts/execution-model.md}
+      - {name: dataframe-vs-rdd-vs-sql, path: concepts/dataframe-vs-rdd-vs-sql.md}
+      - {name: lazy-evaluation, path: concepts/lazy-evaluation.md}
+      - {name: memory-management, path: concepts/memory-management.md}
+    patterns:
+      - {name: join-optimization, path: patterns/join-optimization.md}
+      - {name: partitioning-skew, path: patterns/partitioning-skew.md}
+      - {name: pyspark-idioms, path: patterns/pyspark-idioms.md}
+      - {name: cluster-tuning, path: patterns/cluster-tuning.md}
+
+  sql-patterns:
+    description: "SQL cross-dialect (Postgres/Snowflake/BigQuery/DuckDB) — leitura de query plan, otimização e análise de queries existentes"
+    path: sql-patterns/
+    mcp_validated: null
+    confidence: null
+    agents: [sql-optimizer]
+    entry_points: {index: index.md, quick_reference: quick-reference.md}
+    concepts:
+      - {name: query-plan-reading, path: concepts/query-plan-reading.md}
+      - {name: window-functions, path: concepts/window-functions.md}
+      - {name: cte-recursive-vs-materialized, path: concepts/cte-recursive-vs-materialized.md}
+      - {name: join-types-costs, path: concepts/join-types-costs.md}
+    patterns:
+      - {name: slow-query-diagnosis, path: patterns/slow-query-diagnosis.md}
+      - {name: dialect-translation, path: patterns/dialect-translation.md}
+      - {name: efficient-pagination, path: patterns/efficient-pagination.md}
+      - {name: composite-indexing, path: patterns/composite-indexing.md}
+
+  streaming:
+    description: "Processamento de streaming — Kafka, Flink, CDC/Debezium: stream vs batch, watermarking, delivery semantics, particionamento, windowing, dedup, DLQ"
+    path: streaming/
+    mcp_validated: null
+    confidence: null
+    agents: [streaming-engineer]
+    entry_points: {index: index.md, quick_reference: quick-reference.md}
+    concepts:
+      - {name: stream-vs-batch, path: concepts/stream-vs-batch.md}
+      - {name: watermarking, path: concepts/watermarking.md}
+      - {name: delivery-semantics, path: concepts/delivery-semantics.md}
+      - {name: kafka-partitioning, path: concepts/kafka-partitioning.md}
+    patterns:
+      - {name: cdc-debezium, path: patterns/cdc-debezium.md}
+      - {name: windowing, path: patterns/windowing.md}
+      - {name: deduplication, path: patterns/deduplication.md}
+      - {name: dead-letter-queue, path: patterns/dead-letter-queue.md}
+
+  supabase:
+    description: "Supabase — Auth, RLS, Edge Functions, pgvector, storage e realtime para projetos full-stack"
+    path: supabase/
+    mcp_validated: "2026-06-27"
+    confidence: 0.91
+    agents: [sql-architect]
+    entry_points: {index: index.md, quick_reference: quick-reference.md}
+    concepts:
+      - {name: auth, path: concepts/auth.md}
+      - {name: rls, path: concepts/rls.md}
+      - {name: edge-functions, path: concepts/edge-functions.md}
+      - {name: pgvector, path: concepts/pgvector.md}
+    patterns:
+      - {name: rls-patterns, path: patterns/rls-patterns.md}
+      - {name: realtime-patterns, path: patterns/realtime-patterns.md}
+
+  testing:
+    description: "Padrões de teste — pytest, vitest, fixtures, integração vs unidade, mocking cirúrgico"
+    path: testing/
+    mcp_validated: "2026-06-27"
+    confidence: 0.92
+    agents: []
+    entry_points: {index: index.md, quick_reference: quick-reference.md}
+    concepts:
+      - {name: pyramid, path: concepts/pyramid.md}
+      - {name: fixtures, path: concepts/fixtures.md}
+    patterns:
+      - {name: pytest-patterns, path: patterns/pytest-patterns.md}
+      - {name: vitest-patterns, path: patterns/vitest-patterns.md}

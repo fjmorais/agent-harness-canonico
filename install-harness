@@ -1,0 +1,98 @@
+#!/usr/bin/env bash
+# Instalador guiado do Agent Harness Canônico — wrapper amigável para install_harness.py.
+# Roda a partir da raiz do canônico (./install-harness) ou de qualquer lugar, desde que
+# HARNESS_CANONICAL aponte para o path correto.
+set -euo pipefail
+
+CANONICAL="${HARNESS_CANONICAL:-/home/fabiano/agent-harness-canonico}"
+SCRIPT="$CANONICAL/.claude/skills/install-harness/scripts/install_harness.py"
+
+if [ ! -f "$SCRIPT" ]; then
+  echo "Canônico não encontrado em: $CANONICAL" >&2
+  echo "Defina HARNESS_CANONICAL=/path/correto e rode de novo." >&2
+  exit 1
+fi
+
+print_banner() {
+  local bold="" dim="" cyan="" reset=""
+  if [ -t 1 ] && [ -z "${NO_COLOR:-}" ]; then
+    bold=$'\033[1m'; dim=$'\033[2m'; cyan=$'\033[36m'; reset=$'\033[0m'
+  fi
+
+  # Desenho: o harness (HUB) orquestrando agentes — ASCII puro (sem box-drawing Unicode),
+  # renderiza igual em qualquer terminal/fonte. Alinhamento de colunas verificado à mão.
+  local art=(
+    "        +-----------+"
+    "        |    HUB    |"
+    "        +-----+-----+"
+    "              |"
+    "      +-------+-------+"
+    "      |               |"
+    "+-----------+   +-----------+"
+    "|   AGENT   |   |   AGENT   |"
+    "+-----------+   +-----------+"
+  )
+
+  local text=(
+    ""
+    "${bold}${cyan}AGENT HARNESS CANÔNICO${reset}"
+    "${dim}O ambiente que governa como o Claude Code age no seu projeto.${reset}"
+    ""
+    "Detecta o estado do destino, monta um plano de instalação e só"
+    "escreve depois da sua confirmação. Nada é sobrescrito sem perguntar."
+    ""
+  )
+
+  # largura calculada a partir da maior linha VISÍVEL (sem os códigos de cor)
+  local width=0 line plain len
+  for line in "${text[@]}"; do
+    plain="${line//$'\033'\[[0-9;]*m/}"
+    len=${#plain}
+    (( len > width )) && width=$len
+  done
+  local total=$(( width + 4 ))
+
+  # um único recuo para o bloco inteiro (baseado na linha mais larga do desenho) —
+  # centralizar linha a linha quebraria o alinhamento relativo entre elas
+  local art_width=0 art_line
+  for art_line in "${art[@]}"; do
+    (( ${#art_line} > art_width )) && art_width=${#art_line}
+  done
+  local art_pad=$(( (total - art_width) / 2 ))
+  (( art_pad < 0 )) && art_pad=0
+
+  echo
+  for art_line in "${art[@]}"; do
+    printf "%*s${bold}${cyan}%s${reset}\n" "$art_pad" "" "$art_line"
+  done
+  echo
+
+  local border
+  border=$(printf -- '-%.0s' $(seq 1 $((width + 2))))
+  echo "+${border}+"
+  for line in "${text[@]}"; do
+    plain="${line//$'\033'\[[0-9;]*m/}"
+    printf "| %s%*s |\n" "$line" "$(( width - ${#plain} ))" ""
+  done
+  echo "+${border}+"
+  echo
+}
+
+print_banner
+
+echo "1) Criar um projeto novo do zero"
+echo "2) Trazer o harness para um projeto já existente (atualizar)"
+echo
+read -rp "Escolha [1/2]: " opcao
+case "$opcao" in
+  1) echo "→ modo: projeto novo" ;;
+  2) echo "→ modo: atualizar projeto existente" ;;
+  *) echo "Opção inválida." >&2; exit 1 ;;
+esac
+
+echo
+read -rp "Caminho do projeto de destino (Enter para $(pwd)): " destino
+destino="${destino:-$(pwd)}"
+
+echo
+exec python3 "$SCRIPT" "$destino"

@@ -31,24 +31,26 @@
 
 | O que | Onde | Qtd |
 |---|---|---|
-| Agents | `.cursor/agents/` | 15 |
-| Skills | `.cursor/skills/` | 16 |
+| Agents | `.cursor/agents/` | 27 (4 categorias: `workflow/`, `architect/`, `dev/`, `data-engineering/`) |
+| Skills | `.cursor/skills/` | 17 |
 | Rules | `.cursor/rules/` | 11 |
-| KBs | `.cursor/kb/` | 8 domínios |
-| Commands | `.cursor/commands/` | 3 (novo-projeto, validar, scorecard) |
+| KBs | `.cursor/kb/` | 17 domínios |
+| Commands | `.cursor/commands/` | 18 (4 na raiz + `data-engineering/` + `visual-explainer/`) |
+| Dev Loop | `.cursor/dev/` | tasks/progress/logs/templates/examples — ver `DEV-LOOP.md` |
 | Design docs | `.cursor/design/` | features/, archive/, reports/ |
 | Projetos | `.cursor/projetos/` | histórico de evoluções |
 | Guias HTML | `docs/guia/` | 16 slides (01–16) |
 | Guia de uso | `HARNESS-GUIDE.md` | — |
 | Setup de template | `COMO-USAR.md` | — |
+| Conceito Dev Loop | `DEV-LOOP.md` | — |
 
 ## Como usar no Cursor
 
 Todos os artefatos estão espelhados em `.cursor/` para acesso via `@`-mention:
 
 ```
-@.cursor/agents/harness-brainstorm.md      → entrevista inicial de projeto
-@.cursor/agents/harness-build.md           → implementar tasks com gates
+@.cursor/agents/workflow/harness-brainstorm.md      → entrevista inicial de projeto
+@.cursor/agents/workflow/harness-build.md           → implementar tasks com gates
 @.cursor/skills/install-harness/SKILL.md   → processo de install em outro projeto
 @.cursor/skills/harness-architect/SKILL.md → montar .claude/ de um projeto
 @.cursor/skills/grill-me/SKILL.md          → aprofundar requisitos

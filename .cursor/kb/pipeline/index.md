@@ -32,32 +32,5 @@ qualidade, lineagem, contratos e observabilidade.
 
 ## Quick Reference
 
-### Colunas obrigatórias por camada
-
-| Camada | Colunas obrigatórias |
-|---|---|
-| Raw | `_source_file`, `_ingest_ts` |
-| Bronze | `_ingested_at`, `_source`, `_run_id`, `_batch_id` |
-| Silver | `_processed_at`, `_pipeline_version` |
-| Gold | `_updated_at` |
-
-### Estratégias de schema evolution
-
-| Situação | Estratégia |
-|---|---|
-| Nova coluna opcional (não-breaking) | `mergeSchema` |
-| Tipo mudou / coluna removida | `quarantine` + notificar owner |
-| Violação de contrato de dados | `fail` |
-
-### Decision tree: schema evolution
-
-```
-Schema detectado ≠ esperado?
-    ├── Diferença é ADITIVA (nova coluna nullable)?
-    │   └── strategy=merge? → mergeSchema → processa normalmente
-    │   └── strategy=quarantine? → quarantine + notify
-    ├── Diferença é POTENCIALMENTE BREAKING (tipo mudou, coluna sumiu)?
-    │   └── quarantine + notify owner (sempre)
-    └── Violação de contrato declarado?
-        └── fail (lança exceção + log estruturado)
-```
+Ver [quick-reference.md](quick-reference.md) — colunas obrigatórias por camada, estratégias e
+decision tree de schema evolution. Ler só se a tarefa exigir esse nível de detalhe.
