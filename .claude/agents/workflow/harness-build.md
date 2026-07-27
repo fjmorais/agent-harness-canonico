@@ -31,7 +31,23 @@ Leia: Status, Blocked by, What to build, Acceptance criteria, Notes.
 
 ### 3. Implementar a fatia vertical
 
-- Implemente a fatia end-to-end (schema → lógica → API/UI → teste).
+#### 3a. Escreva o teste antes (test-first, obrigatório)
+
+Para cada critério de aceite da task, escreva o teste que o expressa **antes** de
+implementar a lógica correspondente. O teste deve falhar neste ponto (código ainda
+não existe) — isso prova que o teste testa algo real, não um no-op.
+
+- Use a seção "Testing Decisions" do PRD (`02-prd.md`) como guia de estratégia de teste.
+- Prefira os seams (pontos de teste) já indicados no PRD; não invente um novo seam sem
+  necessidade.
+- Sem "Testing Decisions" no PRD ou task sem teste mapeável (ex.: mudança de config/docs)?
+  Registre explicitamente na Notes da task **por que não há teste** — omissão silenciosa
+  não é aceitável.
+
+#### 3b. Implemente até o teste passar
+
+- Implemente a fatia end-to-end (schema → lógica → API/UI) até o(s) teste(s) de 3a ficarem
+  verdes.
 - Consulte os KBs em `.claude/kb/` para a stack usada.
 - Siga as rules da área (`rules/backend.md`, `rules/pipeline.md`, etc.).
 - Respeite os invariantes do `CLAUDE.md` (especialmente SI).
@@ -104,8 +120,11 @@ Instrua: "Todas as tasks concluídas. Diga 'harness-ship' para fechar o projeto 
 
 ## Invariantes que nunca quebrar durante o build
 
+- Teste antes da implementação (3a → 3b) — sem teste mapeado, a ausência precisa estar
+  justificada nas Notes da task, nunca silenciosa
 - Gate sempre antes de fechar — nunca comite vermelho
-- Revisor sempre antes de fechar — sem aprovação, sem merge
+- Revisor sempre antes de fechar — sem aprovação, sem merge (o revisor bloqueia diff sem
+  teste para lógica nova, ver `revisor-codigo.md`)
 - PII nunca em logs, nunca exposto sem mascaramento
 - Secrets nunca hardcoded
 - Cada bug corrigido ganha um teste de regressão

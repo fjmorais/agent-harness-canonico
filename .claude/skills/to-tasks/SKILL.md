@@ -72,9 +72,13 @@ Avoid specific file paths or code snippets — they go stale fast.
 
 ## Acceptance criteria
 
-- [ ] Criterion 1
-- [ ] Criterion 2
-- [ ] Criterion 3
+For each criterion, state how it will be proven with a test (unit, integration, or e2e — name
+the seam). If a criterion genuinely has no test (e.g. pure config/docs change), write "no test —
+<reason>" instead of leaving it blank; silent omission is not allowed.
+
+- [ ] Criterion 1 — tested by: ...
+- [ ] Criterion 2 — tested by: ...
+- [ ] Criterion 3 — tested by: ...
 
 ## Notes
 
@@ -96,12 +100,15 @@ When the user says "implement task X" or "start task 03":
 
 1. Read the task file
 2. Check that all blockers are marked "done" in their files
-3. Implement the vertical slice
-4. Run `/validar` (gate ruff + mypy + pytest)
-5. Update the task file: change `Status:` to `done` and tick all acceptance criteria
-6. Update `tasks/README.md` status table
-7. Commit all changes with message `feat(task-NN): <title>` — only after gate is green
-8. Append one line to `metrics/entregas.jsonl` (create the file if it doesn't exist)
+3. For each acceptance criterion with a "tested by" note, write that test first — it should
+   fail (the code it exercises doesn't exist yet). Skip only criteria explicitly marked
+   "no test — <reason>".
+4. Implement the vertical slice until the tests from step 3 pass
+5. Run `/validar` (gate ruff + mypy + pytest)
+6. Update the task file: change `Status:` to `done` and tick all acceptance criteria
+7. Update `tasks/README.md` status table
+8. Commit all changes with message `feat(task-NN): <title>` — only after gate is green
+9. Append one line to `metrics/entregas.jsonl` (create the file if it doesn't exist)
 
 The delivery record must follow the schema in `metrics/README.md`. Use the task number as `"issue"`. Example:
 

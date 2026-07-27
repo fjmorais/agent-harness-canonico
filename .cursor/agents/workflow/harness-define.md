@@ -50,7 +50,40 @@ Para tipo **pipeline (b ou c)**, as 10 perguntas obrigatórias antes de fechar:
 
 Se alguma pergunta ficou sem resposta → pergunte agora antes de continuar.
 
-### 3. Salvar artefato
+### 3. Especificações implícitas — detectar o que não foi dito
+
+O checklist do passo 2 cobre o que **foi** discutido no grill. Este passo cobre o que
+**não foi mencionado** mas o domínio da ideia normalmente exige. Aplique as lentes abaixo
+à ideia capturada — não pergunte todas sempre, só as que fazem sentido para este projeto
+específico.
+
+```
+1. Falha de dependência externa: o que acontece se uma API/serviço terceiro falhar ou der timeout?
+2. Concorrência: duas ações simultâneas podem conflitar (dupla submissão, race condition, corrida por um recurso)?
+3. Idempotência: repetir a mesma operação (retry, duplo clique, reprocessamento) é seguro?
+4. Autenticação/Autorização: quem pode fazer o quê? Há multi-tenant ou multi-usuário com isolamento de dados?
+5. Dados sensíveis não declarados: existe campo novo que vira PII/segredo e não foi coberto pelo SI Assessment?
+6. Abuso e limites: existe rate limiting, tamanho máximo de payload/arquivo, ou quota por usuário?
+7. Auditoria: a ação precisa de trilha (quem fez o quê, quando) para investigação/compliance?
+8. Estados de erro visíveis ao usuário: como o erro é comunicado? Há retry automático ou fallback?
+9. Ciclo de vida dos dados: existe expiração, arquivamento, ou exclusão (ex.: LGPD "direito ao esquecimento")?
+10. Dependência de terceiros mudando: o que quebra se o formato/contrato de uma integração externa mudar?
+```
+
+**Para tipo pipeline (b ou c):** a pergunta 4 (Sensibilidade/PII) já cobre a lente 5 — não
+repita. As demais lentes não têm equivalente direto nas 10 perguntas de pipeline (que focam
+em dado, não em operação) — aplique principalmente as lentes 2, 3, 4 e 10 (concorrência de
+writes concorrentes, idempotência de reprocessamento/backfill, quem pode disparar o pipeline,
+o que quebra se o schema/contrato de uma fonte externa mudar sem aviso).
+
+Para cada lente relevante:
+- Se já foi respondida em algum momento do grill, não pergunte de novo — apenas registre.
+- Se não foi respondida, pergunte agora antes de continuar.
+- Se a lente claramente não se aplica a este projeto (ex.: lente 9 num protótipo descartável
+  sem dados persistentes), marque `N/A — {motivo}` sem perguntar ao usuário — mas registre
+  a decisão, nunca omita silenciosamente.
+
+### 4. Salvar artefato
 
 Crie `.claude/projetos/{slug}/01-grill.md`:
 
@@ -89,6 +122,11 @@ Crie `.claude/projetos/{slug}/01-grill.md`:
 9. Qualidade — bloqueante vs log: {resposta}
 10. Portabilidade: {resposta}
 
+## Especificações implícitas detectadas
+{lente #}: {resposta obtida, ou "N/A — {motivo}"}
+{lente #}: {resposta obtida, ou "N/A — {motivo}"}
+(liste só as lentes efetivamente aplicadas — não repita as 10 se a maioria não se aplicou)
+
 ## Critérios de sucesso mensuráveis
 - {métrica 1}: {valor alvo}
 - {métrica 2}: {valor alvo}
@@ -97,14 +135,14 @@ Crie `.claude/projetos/{slug}/01-grill.md`:
 Rode `harness-design` para gerar o PRD e montar o harness.
 ```
 
-### 4. Atualizar STATUS.md
+### 5. Atualizar STATUS.md
 
 ```markdown
 - [x] 1. Grill concluído ({data})
 ## Fase atual: 1 — Grill concluído, pronto para PRD
 ```
 
-### 5. Instruir próximo passo
+### 6. Instruir próximo passo
 
 ```
 Requisitos estruturados em .claude/projetos/{slug}/01-grill.md.

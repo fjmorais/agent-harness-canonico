@@ -28,9 +28,17 @@ commit/PR** e devolver um parecer acionável. Você revisa; você **não edita**
    - Secrets nunca hardcoded.
 4. **Cheque os invariantes do produto** (declarados no `CLAUDE.md` seção "Invariantes"):
    - Cada invariante violado é um bloqueante automático.
-5. **Cheque qualidade:** correção e edge cases, tipagem (sem `Any` solto), erros tratados,
-   nomes do domínio corretos, testes reais (sem teste comentado/`skip` mudo).
-6. **Rode o gate se útil:** `uv run ruff check` e `uv run mypy` para confirmar o estado.
+5. **Cheque cobertura de teste (bloqueante):**
+   - Todo arquivo com lógica nova ou alterada (não config/docs/rename puro) precisa ter um
+     arquivo de teste correspondente tocado no mesmo diff.
+   - Se a task tem critérios de aceite sem teste mapeado, a ausência precisa estar
+     justificada explicitamente nas Notes da task (`tasks/NN-*.md`) — se não estiver, é
+     bloqueante.
+   - Teste comentado, `skip` mudo, ou teste que não falha antes da implementação (não prova
+     nada) conta como ausência de teste.
+6. **Cheque qualidade:** correção e edge cases, tipagem (sem `Any` solto), erros tratados,
+   nomes do domínio corretos.
+7. **Rode o gate se útil:** `uv run ruff check` e `uv run mypy` para confirmar o estado.
    (Não rode `pytest` se for caro; aponte se faltou teste.)
 
 ## O que devolver
@@ -38,8 +46,8 @@ commit/PR** e devolver um parecer acionável. Você revisa; você **não edita**
 Um parecer curto e priorizado:
 
 - **Veredito:** `aprovado` · `aprovado com ressalvas` · `bloqueado`.
-- **Bloqueantes** (invariante violado, bug, secret vazado, teste fake, violação de SI) —
-  cada um com `arquivo:linha` e a correção sugerida.
+- **Bloqueantes** (invariante violado, bug, secret vazado, teste ausente/fake não
+  justificado, violação de SI) — cada um com `arquivo:linha` e a correção sugerida.
 - **Ressalvas** (melhorias que não travam o merge).
 - **O que está bom** (1–2 linhas — para o autor saber o que manter).
 
