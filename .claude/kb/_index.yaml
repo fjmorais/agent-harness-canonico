@@ -100,6 +100,23 @@ domains:
       - {name: macro-patterns, path: patterns/macro-patterns.md}
       - {name: semantic-layer-metrics, path: patterns/semantic-layer-metrics.md}
 
+  design-instrucional:
+    description: "Metodologia de design instrucional para guias passo-a-passo técnicos — sequenciamento pedagógico, estrutura de bloco uniforme, público-alvo, glossário antes de código"
+    path: design-instrucional/
+    mcp_validated: null
+    confidence: null
+    agents: [guia-roteiro, guia-etapas]
+    entry_points: {index: index.md, quick_reference: quick-reference.md}
+    concepts:
+      - {name: sequenciamento-pedagogico, path: concepts/sequenciamento-pedagogico.md}
+      - {name: estrutura-de-prompt-uniforme, path: concepts/estrutura-de-prompt-uniforme.md}
+      - {name: publico-alvo-e-pre-requisitos, path: concepts/publico-alvo-e-pre-requisitos.md}
+      - {name: glossario-antes-do-codigo, path: concepts/glossario-antes-do-codigo.md}
+    patterns:
+      - {name: bloco-contexto-conceito-codigo-validacao, path: patterns/bloco-contexto-conceito-codigo-validacao.md}
+      - {name: checklist-de-producao, path: patterns/checklist-de-producao.md}
+      - {name: apendice-de-troubleshooting, path: patterns/apendice-de-troubleshooting.md}
+
   fastapi:
     description: "Padrões FastAPI — routers finos, service layer, dependency injection, error contracts, async"
     path: fastapi/

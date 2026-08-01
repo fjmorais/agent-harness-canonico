@@ -22,6 +22,7 @@ path-scoped; um `agent` só nasce quando há trabalho delegável de contexto fre
 | `codebase-explorer` | agent | Onboarding em repo desconhecido; "o que esse projeto faz?"; mapear entry points, routers, serviços, testes |
 | `sync-context` | skill | Detectar drift entre CLAUDE.md/HANDOFF.md/CONTEXT.md e código real; sincronizar após mudanças grandes |
 | `make-readme` | skill | Gerar README.md a partir de CLAUDE.md + docker-compose + .env.example + ADRs — nunca inventa |
+| `guia-architect` (fluxo `/novo-guia`) | skill + agents `workflow/guia-*` | Criar guia passo-a-passo didático (HTML autocontido) sobre qualquer assunto técnico — onboarding, tutorial de implementação, migração; consome `kb/design-instrucional/` + KBs técnicos do assunto via JIT |
 
 ## Regras de bolso
 

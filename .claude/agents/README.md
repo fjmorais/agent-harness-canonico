@@ -14,6 +14,12 @@ faz o match sem precisar ler o corpo do arquivo. Esta pasta existe para navegaç
 | `harness-build` | Executa tasks com gate (`/validar`) + `revisor-codigo` |
 | `harness-iterate` | Atualiza artefato de fase específica com cascata consciente |
 | `harness-ship` | Fecha projeto: `/scorecard`, retrospectiva, `STATUS.md` |
+| `guia-brainstorm` | Captura tema, material-fonte e tipo de guia passo-a-passo (`/novo-guia`) |
+| `guia-escopo` | Estrutura objetivos, pré-requisitos, glossário e jornada pedagógica |
+| `guia-roteiro` | Desenha os blocos do guia (contextualização/prep/implementação/validação/apêndices) |
+| `guia-etapas` | Escreve cada bloco (contexto → conceito → código → validação → critério de aceite) |
+| `guia-publish` | Gera o HTML final do guia, delegando à skill `visual-explainer` |
+| `guia-iterate` | Atualiza artefato de fase do guia com cascata consciente |
 
 ## `architect/` — decisão de design antes do código
 

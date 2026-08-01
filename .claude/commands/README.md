@@ -4,11 +4,12 @@ Comandos são invocados explicitamente (`/nome`) — diferente de agents/skills,
 por match do `description:`. Esta pasta tem comandos genéricos do harness soltos na raiz, e duas
 subpastas de vertical (`data-engineering/`, `visual-explainer/`) — ver "Raiz vs subpastas" abaixo.
 
-## Raiz — workflow genérico do harness (4)
+## Raiz — workflow genérico do harness (5)
 
 | Comando | Fase | O que faz | Agente que aciona |
 |---|---|---|---|
 | `/novo-projeto` | 0 — entrada | Fluxo guiado de criação de projeto: SI assessment, detecta tipo (app/pipeline/agente), checkpoints (`salvar-grill`, `salvar-prd`, `salvar-harness`, `salvar-tasks`, `shippar`) | `harness-brainstorm` (e os demais `harness-*` via subcomandos) |
+| `/novo-guia` | 0 — entrada | Fluxo guiado de criação de guia passo-a-passo didático (qualquer assunto técnico): tema → escopo → roteiro → etapas → HTML final | `guia-brainstorm` (e os demais `guia-*` conforme a fase) |
 | `/dev` | Qualquer — tarefa pontual de 1-4h | Dev Loop: PROMPT.md dirigido, verificação por exit code, recovery de sessão — ver `DEV-LOOP.md` na raiz | `prompt-crafter` (craft) / `dev-loop-executor` (execução) |
 | `/validar` | Qualquer, antes de commit | Gate rápido: `ruff` + `mypy` + `pytest` | — (roda o gate direto, mesmo comando do hook de `Stop`) |
 | `/scorecard` | Fechamento | Scorecard de entrega: correção, aderência ao padrão, throughput, autonomia | — (lê `git`/`gh`/`metrics/entregas.jsonl` direto, nunca inventa número) |
@@ -45,9 +46,9 @@ trazido — dependia de um skill `vercel-deploy` que não existe em lugar nenhum
 
 `data-engineering/` e `visual-explainer/` têm massa crítica (7 comandos cada) — cada uma virou
 subpasta seguindo o mesmo critério do agentspec (Luan Moreno): comandos de um mesmo domínio
-coeso agrupados juntos. Os 3 comandos originais continuam soltos na raiz porque são workflow
-genérico do harness, não amarrados a uma vertical técnica — não crie subpasta pra menos de ~5
-comandos coesos.
+coeso agrupados juntos. Os comandos genéricos continuam soltos na raiz porque são workflow do
+harness, não amarrados a uma vertical técnica — não crie subpasta pra menos de ~5 comandos
+coesos.
 
 ## Adicionando um comando novo
 

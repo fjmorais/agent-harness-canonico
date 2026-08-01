@@ -35,19 +35,22 @@ revisor-codigo      # revisar diff antes de "commitar" evolução
 - **Ao renomear pasta:** atualizar `install-harness/SKILL.md` + guias HTML relevantes em `docs/guia/`
 - **Ao evoluir um KB:** verificar se o KB está referenciado na tabela stack-layer de `install-harness/SKILL.md`
 - **Agents e skills devem ter `description:` claro** — é o único texto que o agente vê para decidir quando usar
+- **Toda edição em `.claude/{agents,skills,rules,kb,commands,guias}` deve ser espelhada em `.cursor/`**
+  na mesma sessão (mesma estrutura; `rules/*.md` vira `rules/*.mdc`) — nunca deixar os dois divergirem
 
 ## Onde fica o quê
 
 | O que | Onde | Qtd |
 |---|---|---|
-| Agents | `.claude/agents/` | 27 (4 categorias: `workflow/`, `architect/`, `dev/`, `data-engineering/`) |
-| Skills | `.claude/skills/` | 17 |
+| Agents | `.claude/agents/` | 33 (4 categorias: `workflow/`, `architect/`, `dev/`, `data-engineering/`) |
+| Skills | `.claude/skills/` | 18 |
 | Rules | `.claude/rules/` | 11 |
-| KBs | `.claude/kb/` | 17 domínios |
-| Commands | `.claude/commands/` | 18 (4 na raiz + `data-engineering/` + `visual-explainer/`) |
+| KBs | `.claude/kb/` | 18 domínios |
+| Commands | `.claude/commands/` | 19 (5 na raiz + `data-engineering/` + `visual-explainer/`) |
 | Dev Loop | `.claude/dev/` | tasks/progress/logs/templates/examples — ver `DEV-LOOP.md` |
 | Design docs | `.claude/design/` | features/, archive/, reports/ |
 | Projetos do harness | `.claude/projetos/` | histórico de evoluções |
+| Guias passo-a-passo | `.claude/guias/` | tutoriais didáticos via `/novo-guia` — ver `GUIA-PASSO-A-PASSO.md` |
 | Guias HTML | `docs/guia/` | 16 slides (01–16) |
 | Template CLAUDE.md | `.claude/skills/harness-architect/references/claude-dir-templates.md` | — |
 | Schema do manifest | `.claude/skills/install-harness/references/install-manifest-schema.md` | — |

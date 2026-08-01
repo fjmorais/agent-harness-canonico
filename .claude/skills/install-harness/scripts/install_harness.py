@@ -531,7 +531,7 @@ def apply_plan(plan: list[dict], target: Path, canonical: Path, project_name: st
             if rel in (".claude/design", ".claude/sdd"):
                 for sub in ("features", "archive", "reports"):
                     (dest / sub).mkdir(exist_ok=True)
-            if rel == ".claude/projetos":
+            if rel in (".claude/projetos", ".claude/guias"):
                 readme_src = canonical / rel / "README.md"
                 if readme_src.exists():
                     shutil.copy2(readme_src, dest / "README.md")
