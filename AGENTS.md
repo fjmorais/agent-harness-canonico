@@ -38,7 +38,7 @@
 | O que | Onde | Qtd |
 |---|---|---|
 | Agents | `.cursor/agents/` | 33 (4 categorias: `workflow/`, `architect/`, `dev/`, `data-engineering/`) |
-| Skills | `.cursor/skills/` | 18 |
+| Skills | `.cursor/skills/` | 19 |
 | Rules | `.cursor/rules/` | 11 |
 | KBs | `.cursor/kb/` | 18 domínios |
 | Commands | `.cursor/commands/` | 19 (5 na raiz + `data-engineering/` + `visual-explainer/`) |

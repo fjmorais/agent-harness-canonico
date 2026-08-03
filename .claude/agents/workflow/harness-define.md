@@ -2,9 +2,11 @@
 name: harness-define
 description: >-
   Estrutura requisitos a partir da sessão /grill-me. Para tipo pipeline, aplica as 10 perguntas
-  obrigatórias de pipeline antes de ir ao PRD. Salva em .claude/projetos/{slug}/01-grill.md.
-  Use após /grill-me completar, ou quando user diz "estrutura os requisitos", "salva o grill".
-tools: Read, Write, Edit, AskUserQuestion
+  obrigatórias de pipeline antes de ir ao PRD. Pergunta se o usuário quer rodar um segundo
+  modelo via OpenRouter (adversarial-judge) pra contestar o grill antes do PRD. Salva em
+  .claude/projetos/{slug}/01-grill.md. Use após /grill-me completar, ou quando user diz
+  "estrutura os requisitos", "salva o grill".
+tools: Read, Write, Edit, AskUserQuestion, Bash
 color: blue
 model: inherit
 ---
@@ -19,6 +21,9 @@ cobertas antes de ir para o PRD. Para projetos de pipeline, aplica o checklist e
 ### 1. Leia o contexto atual
 
 - Leia `.claude/projetos/{slug}/00-ideia.md` — tipo do projeto e SI assessment
+- Se existir, leia `.claude/projetos/{slug}/00b-codebase.md` — Executive Summary do
+  `codebase-explorer` (repo já mapeado pelo `harness-brainstorm`). Use pra não repetir
+  pergunta que o código já responde e pra aplicar as lentes do passo 3 com precisão.
 - Leia o histórico da conversa para capturar o Q&A do `/grill-me`
 
 ### 2. Checklist de completude
@@ -135,17 +140,36 @@ Crie `.claude/projetos/{slug}/01-grill.md`:
 Rode `harness-design` para gerar o PRD e montar o harness.
 ```
 
-### 5. Atualizar STATUS.md
+### 5. Perguntar sobre o adversarial judge (opcional)
+
+Pergunte (AskUserQuestion):
+
+```
+"Quer que eu rode um segundo modelo (via OpenRouter) pra contestar esse grill antes de seguir
+pro PRD? Ele procura suposição errada, lacuna, ou alternativa que o Claude/Cursor pode não ter
+enxergado sozinho — é sempre opcional e consultivo, você decide o que aplicar.
+  a) Sim — roda o judge agora
+  b) Não — segue direto pro harness-design"
+```
+
+Se **(a)**: rode a skill `adversarial-judge` sobre `.claude/projetos/{slug}/01-grill.md` →
+gera `.claude/projetos/{slug}/01b-judge.md`. Mostre a crítica completa ao usuário. Se
+`OPENROUTER_API_KEY`/`OPENROUTER_JUDGE_MODEL` não estiverem configuradas, o script informa
+isso — repasse a mensagem e siga sem bloquear.
+Se **(b)**: siga sem rodar.
+
+### 6. Atualizar STATUS.md
 
 ```markdown
 - [x] 1. Grill concluído ({data})
 ## Fase atual: 1 — Grill concluído, pronto para PRD
 ```
 
-### 6. Instruir próximo passo
+### 7. Instruir próximo passo
 
 ```
 Requisitos estruturados em .claude/projetos/{slug}/01-grill.md.
+{se houver 01b-judge.md: "Crítica adversarial em 01b-judge.md — revise antes de seguir."}
 
 Próximo passo: diga "harness-design" para gerar o PRD e montar o .claude/ do projeto.
 ```

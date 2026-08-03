@@ -2,9 +2,11 @@
 name: harness-design
 description: >-
   Gera PRD via /to-prd e dispara /harness-architect para montar o .claude/ do projeto.
-  Salva PRD em .claude/projetos/{slug}/02-prd.md e decisões de harness em 03-harness.md.
-  Use após harness-define concluir, ou quando user diz "gera o PRD", "monta o harness".
-tools: Read, Write, Edit, Bash
+  Pergunta se o usuário quer rodar um segundo modelo via OpenRouter (adversarial-judge)
+  pra contestar o PRD antes de montar o harness em cima dele. Salva PRD em
+  .claude/projetos/{slug}/02-prd.md e decisões de harness em 03-harness.md. Use após
+  harness-define concluir, ou quando user diz "gera o PRD", "monta o harness".
+tools: Read, Write, Edit, Bash, AskUserQuestion
 color: purple
 model: inherit
 ---
@@ -43,7 +45,26 @@ Após `/to-prd` gerar `PRD.md`, salve em `.claude/projetos/{slug}/02-prd.md`:
 (cópia do conteúdo de PRD.md)
 ```
 
-### 4. Montar o harness via /harness-architect
+### 4. Perguntar sobre o adversarial judge (opcional)
+
+Pergunte (AskUserQuestion), **antes** de disparar o `/harness-architect` — se o PRD tiver
+problema, é melhor achar agora do que depois de montar o `.claude/` do projeto em cima dele:
+
+```
+"Quer que eu rode um segundo modelo (via OpenRouter) pra contestar esse PRD antes de montar
+o harness em cima dele? Ele procura suposição errada, lacuna, ou alternativa não considerada
+— sempre opcional e consultivo, você decide o que aplicar.
+  a) Sim — roda o judge agora
+  b) Não — segue direto pro /harness-architect"
+```
+
+Se **(a)**: rode a skill `adversarial-judge` sobre `.claude/projetos/{slug}/02-prd.md` →
+gera `.claude/projetos/{slug}/02b-judge.md`. Mostre a crítica completa ao usuário e pergunte
+se quer ajustar o PRD antes de continuar. Se `OPENROUTER_API_KEY`/`OPENROUTER_JUDGE_MODEL`
+não estiverem configuradas, o script informa isso — repasse a mensagem e siga sem bloquear.
+Se **(b)**: siga sem rodar.
+
+### 5. Montar o harness via /harness-architect
 
 Execute `/harness-architect` com o contexto do PRD. O harness-architect:
 1. Lê o PRD por camada (stack-layer-map)
@@ -59,7 +80,7 @@ Para projetos de pipeline, o harness-architect vai gerar:
 - `rules/pipeline.md`, `rules/schema-evolution.md`, `rules/observability.md`
 - Templates em `config/environments/`
 
-### 5. Salvar decisões de harness
+### 6. Salvar decisões de harness
 
 Após o harness-architect concluir, crie `.claude/projetos/{slug}/03-harness.md`:
 
@@ -93,7 +114,7 @@ Após o harness-architect concluir, crie `.claude/projetos/{slug}/03-harness.md`
 Rode `/to-tasks` ou `/to-issues` para fatiar o PRD em tasks implementáveis.
 ```
 
-### 6. Atualizar STATUS.md
+### 7. Atualizar STATUS.md
 
 ```markdown
 - [x] 2. PRD gerado ({data})
@@ -101,10 +122,11 @@ Rode `/to-tasks` ou `/to-issues` para fatiar o PRD em tasks implementáveis.
 ## Fase atual: 3 — Harness montado, pronto para tasks
 ```
 
-### 7. Instruir próximo passo
+### 8. Instruir próximo passo
 
 ```
 PRD em .claude/projetos/{slug}/02-prd.md
+{se houver 02b-judge.md: "Crítica adversarial em 02b-judge.md."}
 Harness montado — decisões em .claude/projetos/{slug}/03-harness.md
 
 Próximo passo: rode /to-tasks (offline) ou /to-issues (GitHub) para fatiar o PRD em tasks.

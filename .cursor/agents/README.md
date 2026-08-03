@@ -61,6 +61,73 @@ deste harness (sem tier/kb_domains/confidence scoring), não copiada ao pé da l
 | `data-contracts-engineer` | Contratos ODCS, SLA, governança de schema |
 | `data-quality-analyst` | Great Expectations, Soda, testes dbt, observabilidade |
 
+## Mapa de escalação
+
+Não existe um arquivo central de "router" — cada agente já declara, na própria seção
+"O que NÃO faz — encaminhe para" (ou equivalente), pra quem escalar quando o pedido sai do
+próprio escopo. Isto aqui é a **visão consolidada** dessas declarações, pra navegação humana
+e pra `agent-creator` checar sobreposição antes de criar um agente novo (ver "Adicionando um
+agente novo" abaixo). Se editar a tabela de escalação de um agente, atualize aqui também.
+
+### Dentro de `data-engineering/`
+
+```text
+schema-designer     <-> dbt-specialist        modelagem dimensional <-> implementação em dbt
+schema-designer     <-> spark-engineer        modelagem <-> transformação PySpark
+schema-designer     <-> sql-optimizer         design de schema <-> otimização de query
+schema-designer     <-> lakehouse-architect   modelagem lógica <-> formato físico de tabela
+dbt-specialist      <-> spark-engineer        model SQL vs job PySpark
+dbt-specialist      <-> pipeline-architect    model dbt <-> orquestração/DAG
+dbt-specialist      <-> data-quality-analyst  model <-> suite Great Expectations/Soda
+dbt-specialist      <-> data-contracts-engineer  teste dbt gerado a partir de um contrato
+pipeline-architect  <-> streaming-engineer    orquestração batch <-> streaming
+spark-engineer      <-> lakehouse-architect   job PySpark <-> decisão de table format
+streaming-engineer  <-> lakehouse-architect   sink de streaming <-> table format
+lakehouse-architect <-> data-platform-engineer  table format <-> infra/custo cloud
+data-contracts-engineer <-> data-quality-analyst  contrato <-> implementação do check
+data-contracts-engineer <-> schema-designer   contrato <-> design de schema do zero
+data-quality-analyst <-> sql-optimizer        qualidade <-> query lenta
+```
+
+### `data-engineering/` <-> `architect/`
+
+```text
+sql-optimizer      -> sql-architect      otimizar query existente vs desenhar query nova
+streaming-engineer -> rag-architect      embeddings/RAG em tempo real
+```
+
+### `architect/` <-> `architect/`
+
+```text
+search-strategy-advisor -> rag-architect   decisão rápida de canal (vetor/SQL/híbrido) vs
+                                            design completo de retrieval do zero
+```
+
+### `dev/` <-> qualquer categoria
+
+```text
+dev-loop-executor  -> qualquer agente   via Task(subagent_type: ...), ver DEV-LOOP.md —
+                                          é o orquestrador do nível 2 do espectro
+                                          (vibe coding / Dev Loop / harness completo)
+prompt-crafter     -> qualquer agente   mesmo mecanismo, na fase de craft do PROMPT.md
+revisor-codigo     -> sql-optimizer      revisão de diff SQL-pesado, ver /sql-review
+```
+
+### `workflow/` <-> qualquer categoria
+
+```text
+harness-build       -> revisor-codigo    obrigatório antes de fechar qualquer task
+harness-brainstorm  -> codebase-explorer opcional — só se o repo já tem código (passo 1),
+                                          decisão sempre do usuário
+harness-define      -> adversarial-judge opcional — segunda opinião via OpenRouter sobre o
+harness-design      -> adversarial-judge grill/PRD, sempre consultivo, nunca bloqueia
+```
+
+`harness-design` (via `/harness-architect`) decide quais agentes de `data-engineering/` ou
+`architect/` nascem no projeto **alvo** olhando o PRD por camada — essa decisão é caso a caso,
+não uma relação fixa como as tabelas acima. Ver
+`.claude/skills/harness-architect/references/stack-layer-map.md`.
+
 ## Adicionando um agente novo
 
 Use `agent-creator` (ele já sabe pedir a categoria). Se nenhuma categoria existente encaixa,

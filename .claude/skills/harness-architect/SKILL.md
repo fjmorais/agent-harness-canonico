@@ -86,6 +86,13 @@ leia esse arquivo antes de entrevistar.
 
 ### 3. Sintetize o Harness Plan
 
+Antes de colocar um `agent` novo no plano: esta skill é o **segundo caminho** deste canônico
+que gera arquivo de agente (o primeiro é o `agent-creator`, que entrevista). Como aqui não há
+entrevista, aplique o mesmo gate de redundância na mão — leia o Mapa de escalação em
+`.claude/agents/README.md` e confirme que nenhum agente já existente (no canônico, ou já
+copiado pro projeto alvo pelo `install-harness`) cobre >60% da responsabilidade antes de
+planejar um agente novo. Se cobrir, o plano referencia o agente existente — não gera arquivo.
+
 Quando os clusters estiverem cobertos, escreva um **Harness Plan**: uma tabela que mapeia cada
 decisão → ao artefato do `.claude/` que a materializa → ao pilar que ela serve. Use exatamente
 esta estrutura:

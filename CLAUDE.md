@@ -43,7 +43,7 @@ revisor-codigo      # revisar diff antes de "commitar" evolução
 | O que | Onde | Qtd |
 |---|---|---|
 | Agents | `.claude/agents/` | 33 (4 categorias: `workflow/`, `architect/`, `dev/`, `data-engineering/`) |
-| Skills | `.claude/skills/` | 18 |
+| Skills | `.claude/skills/` | 19 |
 | Rules | `.claude/rules/` | 11 |
 | KBs | `.claude/kb/` | 18 domínios |
 | Commands | `.claude/commands/` | 19 (5 na raiz + `data-engineering/` + `visual-explainer/`) |
