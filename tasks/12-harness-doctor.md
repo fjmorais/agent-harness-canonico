@@ -1,6 +1,6 @@
 # `harness_doctor.py` — diagnóstico honesto por capability
 
-**Status:** not started
+**Status:** done
 **Blocked by:** 03-scaffold-projeto-novo.md, 04-update-seguro.md
 
 ## What to build
@@ -16,21 +16,28 @@ lacuna sempre explícita.
 
 ## Acceptance criteria
 
-- [ ] Projeto com todos os arquivos intactos reporta `ok` para todas as capabilities — tested
+- [x] Projeto com todos os arquivos intactos reporta `ok` para todas as capabilities — tested
       by: teste de integração com fixture `tests/fixtures/harness/v1-fresh/` pós-instalação.
-- [ ] Projeto com um arquivo do harness editado manualmente reporta `customized` só para aquele
+- [x] Projeto com um arquivo do harness editado manualmente reporta `customized` só para aquele
       arquivo/capability, não para o projeto inteiro — tested by: teste de integração usando
       fixture `tests/fixtures/harness/v1-customized/`.
-- [ ] Projeto com um diretório esperado ausente (ex.: `.harness/audit/` nunca criado) reporta
+- [x] Projeto com um diretório esperado ausente (ex.: `.harness/audit/` nunca criado) reporta
       `missing` para a capability correspondente — tested by: teste de integração com fixture
       incompleta.
-- [ ] Capability de um executor sem adapter (ex.: Cursor, se a task 11 concluir inviável)
+- [x] Capability de um executor sem adapter (ex.: Cursor, se a task 11 concluir inviável)
       reporta `unavailable` com motivo, nunca `missing` — tested by: teste unitário com manifest
       declarando `unavailable` explicitamente.
-- [ ] Nenhuma chamada a `diagnose()` retorna um valor numérico (ex.: contagem de eventos) como
+- [x] Nenhuma chamada a `diagnose()` retorna um valor numérico (ex.: contagem de eventos) como
       `0` quando o dado real é "não sei" — tested by: teste unitário verificando que ausência de
       dado produz `null`/`"unavailable"`, nunca `0`.
 
 ## Notes
 
 Reforça a "regra de honestidade" da seção 5 do plano original e da Pergunta 6 do grill.
+
+**Escopo do mapeamento arquivo→capability:** `_FILE_CAPABILITY_MAP` é um mapeamento best-effort
+inicial (ex.: `config.json` → `workflow`, `audit/audit.jsonl` → `delivery_metrics`) — capabilities
+são conceitos amplos sem 1:1 óbvio com arquivo. O checksum hoje só cobre arquivos dentro de
+`.harness/`, não `.claude/`/`.cursor/` (essa extensão de escopo, levantada na Pergunta 6 do
+grill, fica para uma task futura se necessário — os testes de fixture desta task cobrem só a
+saúde do `.harness/` em si).
