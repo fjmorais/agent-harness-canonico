@@ -4,6 +4,8 @@ import hashlib
 import json
 from pathlib import Path
 
+import pytest
+
 from scripts.harness_deliveries import sync_deliveries
 from scripts.harness_scaffold import apply_harness_scaffold, harness_dir
 
@@ -79,3 +81,53 @@ def test_only_new_lines_are_synced_on_subsequent_run(tmp_path: Path) -> None:
     deliveries_path = harness_dir(target) / "deliveries" / "deliveries.jsonl"
     issues = {json.loads(line)["issue"] for line in deliveries_path.read_text().splitlines()}
     assert issues == {1, 2}
+
+
+def test_pending_verdict_is_deferred_not_synced_and_does_not_break_batch(tmp_path: Path) -> None:
+    entrega_pendente = {
+        **ENTREGA_2,
+        "revisor": {"veredito": "pendente", "bloqueantes": 0, "ressalvas": 0},
+    }
+    target = _setup(tmp_path, [ENTREGA_1, entrega_pendente])
+
+    n = sync_deliveries(target)
+    assert n == 1  # só a entrega 1 (finalizada) sincroniza; a pendente é adiada, não quebra o batch
+
+    deliveries_path = harness_dir(target) / "deliveries" / "deliveries.jsonl"
+    issues = {json.loads(line)["issue"] for line in deliveries_path.read_text().splitlines()}
+    assert issues == {1}
+
+
+def test_pending_verdict_is_synced_once_finalized_on_next_run(tmp_path: Path) -> None:
+    entregas_path_content = [
+        ENTREGA_1,
+        {**ENTREGA_2, "revisor": {"veredito": "pendente", "bloqueantes": 0, "ressalvas": 0}},
+    ]
+    target = _setup(tmp_path, entregas_path_content)
+    sync_deliveries(target)  # issue 2 fica pendente, não sincroniza
+
+    # revisor termina — harness-build reescreve a linha com o veredito final
+    entregas_path = target / "metrics" / "entregas.jsonl"
+    lines = [json.dumps(ENTREGA_1), json.dumps(ENTREGA_2)]
+    entregas_path.write_text("\n".join(lines) + "\n", encoding="utf-8")
+
+    n = sync_deliveries(target)
+    assert n == 1
+    deliveries_path = harness_dir(target) / "deliveries" / "deliveries.jsonl"
+    issues = {json.loads(line)["issue"] for line in deliveries_path.read_text().splitlines()}
+    assert issues == {1, 2}
+
+
+def test_invalid_line_is_skipped_and_logged_without_breaking_batch(
+    tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    entrega_invalida = {**ENTREGA_2, "criterios_aceite": "nao-deveria-ser-string"}
+    target = _setup(tmp_path, [ENTREGA_1, entrega_invalida])
+
+    n = sync_deliveries(target)
+    assert n == 1  # entrega 1 (válida) sincroniza mesmo com entrega 2 inválida no meio do arquivo
+
+    deliveries_path = harness_dir(target) / "deliveries" / "deliveries.jsonl"
+    issues = {json.loads(line)["issue"] for line in deliveries_path.read_text().splitlines()}
+    assert issues == {1}
+    assert "issue 2" in capsys.readouterr().err

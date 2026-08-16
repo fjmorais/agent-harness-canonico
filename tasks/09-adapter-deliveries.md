@@ -30,3 +30,19 @@ ADR-001).
 
 Ver ADR-001: `deliveries/deliveries.jsonl` é derivado, nunca escrito em paralelo por
 `harness-build`. Não alterar `harness-build` nesta task.
+
+**Bloqueante corrigido (revisor-codigo, 2026-08-16):** a primeira versão levantava exceção e
+descartava o batch inteiro quando encontrava uma linha com `revisor.veredito: "pendente"` — que
+é um estado real e recorrente do próprio `metrics/entregas.jsonl` deste repo (o `harness-build`
+grava esse placeholder antes do `revisor-codigo` rodar). Reproduzido contra os dados reais deste
+repositório antes da correção. Corrigido: vereditos `pendente` são adiados (nem sincronizados
+nem descartados — reconsiderados na próxima chamada), e linhas genuinamente inválidas são
+puladas com log em stderr em vez de derrubar o batch. `sync_deliveries()` também passou a ser
+chamada de `handle_session_end()` (`scripts/harness_hook.py`, task 07) — antes não havia nenhum
+caller real, a feature ficava "morta" em uso normal (ressalva não bloqueante do mesmo revisor).
+
+**Critério de aceite 4 (/scorecard sem regressão):** verificado manualmente — `/scorecard` lê
+exclusivamente `metrics/entregas.jsonl` (confirmado via `grep` em
+`.claude/commands/scorecard.md`), sem nenhuma referência a `.harness/`; este adapter não altera
+`harness-build` nem o formato de `metrics/entregas.jsonl`, então não há superfície de regressão.
+Não há teste automatizado porque `/scorecard` é comando/prompt, não código testável por pytest.

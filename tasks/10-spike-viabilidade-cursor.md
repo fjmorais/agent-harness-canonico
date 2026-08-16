@@ -1,6 +1,6 @@
 # Spike: viabilidade de hooks equivalentes no Cursor
 
-**Status:** not started
+**Status:** done
 **Blocked by:** none
 
 ## What to build
@@ -16,10 +16,10 @@ Resultado vira input direto da task 11.
 
 ## Acceptance criteria
 
-- [ ] Documento de spike (`docs/adr/002-viabilidade-hooks-cursor.md` ou seção de notas) resume
+- [x] Documento de spike (`docs/adr/002-viabilidade-hooks-cursor.md` ou seção de notas) resume
       o que foi encontrado, com fontes — no test — decisão de pesquisa/documentação, não código
       executável.
-- [ ] Recomendação clara para a task 11: "implementar adapter de hook" ou "cair para caminho de
+- [x] Recomendação clara para a task 11: "implementar adapter de hook" ou "cair para caminho de
       agente/unavailable" — no test — é uma decisão registrada, não uma função testável.
 
 ## Notes

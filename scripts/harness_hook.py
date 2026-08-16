@@ -19,6 +19,7 @@ import uuid
 from datetime import UTC, datetime
 from pathlib import Path
 
+from scripts.harness_deliveries import sync_deliveries
 from scripts.harness_event_writer import rebuild_timeline, write_event
 from scripts.harness_redact import redact
 from scripts.harness_scaffold import harness_dir, is_harness_installed
@@ -119,6 +120,7 @@ def handle_session_end(
 
     timeline = rebuild_timeline(run_dir)
     _update_runs_index(base, session_id, run, len(timeline))
+    sync_deliveries(target)  # entregas finalizadas desde o início da sessão viram delivery-record
     return run_dir
 
 
