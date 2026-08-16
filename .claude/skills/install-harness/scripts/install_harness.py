@@ -948,9 +948,15 @@ def main() -> None:
             applied["harness_scaffold"] = apply_harness_scaffold(target, project_name)
         if harness_update_plan is not None and apply_harness_update is not None:
             confirm_migrations = bool(decisions.get("confirm_harness_migrations", False))
-            applied["harness_update"] = apply_harness_update(
+            harness_update_result = apply_harness_update(
                 target, project_name, confirm_migrations=confirm_migrations
             )
+            applied["harness_update"] = harness_update_result
+            if harness_update_result.get("skipped_incompatible"):
+                applied["harness_update_warning"] = (
+                    "arquivo(s) pulados por incompatibilidade de schema — ver "
+                    "skipped_incompatible; rode uma migration antes de tentar de novo"
+                )
         if (
             harness_plan is not None or harness_update_plan is not None
         ) and write_cursor_hooks_config is not None:
@@ -1027,6 +1033,12 @@ def main() -> None:
             target, project_name, confirm_migrations=confirm_migrations
         )
         print(f".harness/ atualizado: {update_result}.")
+        if update_result.get("skipped_incompatible"):
+            print(
+                "AVISO: arquivo(s) pulados por incompatibilidade de schema "
+                f"({update_result['skipped_incompatible']}) — rode uma migration antes de "
+                "tentar de novo."
+            )
     if (
         harness_plan is not None or harness_update_plan is not None
     ) and write_cursor_hooks_config is not None:

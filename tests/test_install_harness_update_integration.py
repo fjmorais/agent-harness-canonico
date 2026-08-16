@@ -87,6 +87,24 @@ def test_pending_migration_listed_but_not_applied_without_confirmation(tmp_path:
     assert json.loads(config_path.read_text())["schema_version"] == "0.9"
 
 
+def test_skipped_incompatible_file_surfaces_explicit_warning_in_json_output(
+    tmp_path: Path,
+) -> None:
+    target = tmp_path / "projeto"
+    _apply(target, {})
+
+    config_path = target / ".harness" / "config.json"
+    config = json.loads(config_path.read_text())
+    config["schema_version"] = "0.9"
+    config_path.write_text(json.dumps(config), encoding="utf-8")
+    (target / ".harness" / "state" / "current-workflow.json").unlink()  # força recriação
+
+    applied = _apply(target, {})
+
+    assert "state/current-workflow.json" in applied["harness_update"]["skipped_incompatible"]
+    assert "harness_update_warning" in applied
+
+
 def test_migration_applied_when_confirmed_via_decisions_file(tmp_path: Path) -> None:
     target = tmp_path / "projeto"
     _apply(target, {})
