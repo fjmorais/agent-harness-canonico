@@ -16,7 +16,7 @@ código de produto/web no repositório. Ver `PRD.md` e `docs/adr/001-observabili
 | [08](08-agregacao-usage.md) | Agregação `usage.json` por modelo e correlação | done | 06 |
 | [09](09-adapter-deliveries.md) | Adapter `deliveries/` — derivação de `metrics/entregas.jsonl` | done | 03 |
 | [10](10-spike-viabilidade-cursor.md) | Spike: viabilidade de hooks equivalentes no Cursor | done | none |
-| [11](11-adapter-hooks-cursor.md) | Adapter de hooks — Cursor (viável, ver ADR-002) | not started | 07, 10 |
+| [11](11-adapter-hooks-cursor.md) | Adapter de hooks — Cursor (viável, ver ADR-002) | done | 07, 10 |
 | [12](12-harness-doctor.md) | `harness_doctor.py` — diagnóstico honesto por capability | done | 03, 04 |
 | [13](13-compatibilidade-schema.md) | Validação de compatibilidade de schema (N / N-1) | done | 01, 02, 04 |
 | [14](14-harness-prune.md) | `harness_prune.py` — retenção manual confirmada | done | 03 |

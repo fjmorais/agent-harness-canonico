@@ -61,6 +61,23 @@ def _import_harness_scaffold(canonical: Path) -> tuple[object, ...] | None:
         hs.is_harness_installed,
         hs.plan_harness_scaffold,
         hs.plan_harness_update,
+        hs.write_cursor_hooks_config,
+    )
+
+
+def _enable_cursor_telemetry_capability(target: Path) -> None:
+    """Marca `capabilities.telemetry.cursor = true` no manifest v2 já gravado por
+    `write_manifest()`. Chamado depois do scaffold/update do `.harness/`, nunca antes —
+    `write_manifest()` já rodou e o manifest existe neste ponto."""
+    manifest = read_manifest(target)
+    if manifest is None:
+        return
+    capabilities = manifest.setdefault("capabilities", {})
+    telemetry = capabilities.setdefault("telemetry", {})
+    telemetry["cursor"] = True
+    manifest_path = target / MANIFEST_REL
+    manifest_path.write_text(
+        json.dumps(manifest, indent=2, ensure_ascii=False) + "\n", encoding="utf-8"
     )
 
 
@@ -881,6 +898,7 @@ def main() -> None:
     harness_fns = _import_harness_scaffold(canonical)
     apply_harness_scaffold = apply_harness_update = None
     harness_dir_fn = is_harness_installed = plan_harness_scaffold = plan_harness_update = None
+    write_cursor_hooks_config = None
     harness_plan = None
     harness_update_plan = None
     if harness_fns is None:
@@ -896,6 +914,7 @@ def main() -> None:
             is_harness_installed,
             plan_harness_scaffold,
             plan_harness_update,
+            write_cursor_hooks_config,
         ) = harness_fns
         if not harness_dir_fn(target).exists():
             harness_plan = plan_harness_scaffold(target)
@@ -924,6 +943,12 @@ def main() -> None:
             applied["harness_update"] = apply_harness_update(
                 target, project_name, confirm_migrations=confirm_migrations
             )
+        if (
+            harness_plan is not None or harness_update_plan is not None
+        ) and write_cursor_hooks_config is not None:
+            write_cursor_hooks_config(target)
+            _enable_cursor_telemetry_capability(target)
+            applied["cursor_hooks"] = "written"
         print(json.dumps(applied, indent=2, ensure_ascii=False))
         return
 
@@ -994,6 +1019,12 @@ def main() -> None:
             target, project_name, confirm_migrations=confirm_migrations
         )
         print(f".harness/ atualizado: {update_result}.")
+    if (
+        harness_plan is not None or harness_update_plan is not None
+    ) and write_cursor_hooks_config is not None:
+        write_cursor_hooks_config(target)
+        _enable_cursor_telemetry_capability(target)
+        print(".cursor/hooks.json criado (adapter de telemetria Cursor).")
     print(f"\nFeito: {summarize(counts)}.")
     print("\nPróximos passos:")
     print("  1. /grill-with-docs — preencher CONTEXT.md com terminologia real do domínio")

@@ -319,3 +319,30 @@ def apply_harness_update(
     )
 
     return {"created": created, "migrations_applied": migrations_applied, "backups": backups}
+
+
+# ------------------------------------------------------------------ adapter Cursor (task 11)
+
+CURSOR_HOOKS_REL = ".cursor/hooks.json"
+_HOOK_SCRIPT_COMMAND = "uv run python3 scripts/harness_hook.py"
+_CURSOR_HOOK_EVENTS = ["sessionStart", "sessionEnd", "preToolUse", "postToolUse", "subagentStop"]
+
+
+def generate_cursor_hooks_config() -> dict[str, object]:
+    """Conteúdo de `.cursor/hooks.json` apontando pro mesmo `scripts/harness_hook.py` usado
+    pelo adapter Claude Code (task 07) — sem duplicar lógica, só a camada de normalização de
+    payload já cuida da diferença de formato (ver docs/adr/002-viabilidade-hooks-cursor.md)."""
+    return {
+        "version": 1,
+        "hooks": {event: [{"command": _HOOK_SCRIPT_COMMAND}] for event in _CURSOR_HOOK_EVENTS},
+    }
+
+
+def write_cursor_hooks_config(target: Path) -> Path:
+    path = target / CURSOR_HOOKS_REL
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(
+        json.dumps(generate_cursor_hooks_config(), indent=2, ensure_ascii=False) + "\n",
+        encoding="utf-8",
+    )
+    return path

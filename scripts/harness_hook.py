@@ -1,14 +1,19 @@
-"""Adapter de hooks do Claude Code — SessionStart/SessionEnd/PreToolUse/PostToolUse/
-SubagentStop escrevendo em `.harness/` (task 07).
+"""Adapter de hooks — Claude Code (task 07) e Cursor (task 11) escrevendo em `.harness/`.
 
 Executado como script standalone: lê o payload do hook via stdin (JSON), despacha para o
 handler certo. No-op silencioso (exit 0) se `.harness/` não estiver instalado ou telemetria
 estiver desligada — nunca quebra a sessão do usuário por causa de telemetria.
 
+Cursor expõe hooks estruturalmente equivalentes (sessionStart/sessionEnd/preToolUse/
+postToolUse/subagentStart/subagentStop, camelCase, stdin/stdout JSON — ver
+docs/adr/002-viabilidade-hooks-cursor.md). `_normalize_cursor_payload()` traduz o payload
+Cursor pro formato interno já usado pelo adapter Claude Code, sem duplicar lógica de negócio —
+só `tool_output` (string JSON serializada) e `subagent_type`/`subagent_id` precisam de
+normalização; o resto dos nomes de campo já coincide.
+
 Limitação conhecida e documentada (não inventar valor): `correlation_id` não é derivável com
-confiança a partir do payload de hook disponível hoje — sempre gravado como `None` explícito
-até um mecanismo de correlação mais forte existir (ex.: variável de ambiente setada pelos
-comandos/skills do harness).
+confiança a partir do payload de hook disponível hoje (nem Claude Code, nem Cursor) — sempre
+gravado como `None` explícito até um mecanismo de correlação mais forte existir.
 """
 
 from __future__ import annotations
@@ -28,6 +33,55 @@ from scripts.schema_validation import validate
 EXECUTOR = "claude-code"
 PROVIDER = "anthropic"
 MAIN_WRITER_ID = "main"
+
+# Cursor usa hook_event_name em camelCase; Claude Code usa PascalCase. Mapeamento pra
+# normalizar pro vocabulário interno (PascalCase) já usado por dispatch()/handlers.
+_CURSOR_EVENT_NAMES = {
+    "sessionStart": "SessionStart",
+    "sessionEnd": "SessionEnd",
+    "preToolUse": "PreToolUse",
+    "postToolUse": "PostToolUse",
+    "subagentStart": "SubagentStart",  # sem handler dedicado — Claude Code não tem equivalente
+    "subagentStop": "SubagentStop",
+}
+
+
+def _is_cursor_payload(hook_payload: dict[str, object]) -> bool:
+    return str(hook_payload.get("hook_event_name", "")) in _CURSOR_EVENT_NAMES
+
+
+def _normalize_cursor_payload(hook_payload: dict[str, object]) -> dict[str, object]:
+    """Traduz um payload de hook do Cursor pro formato interno (mesmo vocabulário do adapter
+    Claude Code). Não muta o payload original."""
+    raw_event = str(hook_payload.get("hook_event_name", ""))
+    normalized = dict(hook_payload)
+    normalized["hook_event_name"] = _CURSOR_EVENT_NAMES.get(raw_event, raw_event)
+    normalized["source_executor"] = "cursor"
+
+    if "cwd" not in normalized:
+        workspace_roots = hook_payload.get("workspace_roots")
+        if isinstance(workspace_roots, list) and workspace_roots:
+            normalized["cwd"] = workspace_roots[0]
+
+    if raw_event == "postToolUse" and "tool_output" in hook_payload:
+        raw_output = hook_payload["tool_output"]
+        parsed: object = None
+        if isinstance(raw_output, str):
+            try:
+                parsed = json.loads(raw_output)
+            except json.JSONDecodeError:
+                parsed = None
+        elif isinstance(raw_output, dict):
+            parsed = raw_output
+        is_error = bool(isinstance(parsed, dict) and parsed.get("error"))
+        normalized["tool_response"] = {"is_error": is_error}
+
+    if raw_event in ("subagentStart", "subagentStop") and "agent_type" not in normalized:
+        subagent_type = hook_payload.get("subagent_type")
+        if subagent_type is not None:
+            normalized["agent_type"] = subagent_type
+
+    return normalized
 
 
 def _now() -> str:
@@ -76,7 +130,7 @@ def _write_run_json(run_dir: Path, run: dict[str, object]) -> None:
     )
 
 
-def handle_session_start(target: Path, session_id: str) -> Path:
+def handle_session_start(target: Path, session_id: str, executor: str = EXECUTOR) -> Path:
     base = harness_dir(target)
     run_dir = _new_run_dir(base, session_id)
     run_dir.mkdir(parents=True, exist_ok=True)
@@ -84,8 +138,8 @@ def handle_session_start(target: Path, session_id: str) -> Path:
         "schema_version": "1.0",
         "run_id": session_id,
         "project_id": _project_id(base),
-        "executor": EXECUTOR,
-        "provider": PROVIDER,
+        "executor": executor,
+        "provider": PROVIDER if executor == EXECUTOR else executor,
         "started_at": _now(),
         "ended_at": None,
         "status": "running",
@@ -154,6 +208,8 @@ def _build_event(
     writer_id: str,
     event_type: str,
     payload: dict[str, object],
+    source: str = EXECUTOR,
+    provider: str = PROVIDER,
 ) -> dict[str, object]:
     sequence = _next_sequence(run_dir, writer_id)
     raw_event: dict[str, object] = {
@@ -162,8 +218,8 @@ def _build_event(
         "project_id": project_id,
         "run_id": session_id,
         "writer_id": writer_id,
-        "source": EXECUTOR,
-        "provider": PROVIDER,
+        "source": source,
+        "provider": provider,
         "event_type": event_type,
         "occurred_at": _now(),
         "sequence": sequence,
@@ -181,7 +237,11 @@ def _build_event(
 
 
 def handle_tool_use(
-    target: Path, session_id: str, hook_event: str, hook_payload: dict[str, object]
+    target: Path,
+    session_id: str,
+    hook_event: str,
+    hook_payload: dict[str, object],
+    executor: str = EXECUTOR,
 ) -> Path | None:
     if hook_event != "PostToolUse":
         return None  # MVP: só emitimos evento com resultado conhecido (pós tool call)
@@ -207,13 +267,15 @@ def handle_tool_use(
             "tool_input": hook_payload.get("tool_input"),
             "exit_code": exit_code,
         },
+        source=executor,
+        provider=PROVIDER if executor == EXECUTOR else executor,
     )
     write_event(run_dir, MAIN_WRITER_ID, event)
     return run_dir
 
 
 def handle_subagent_stop(
-    target: Path, session_id: str, hook_payload: dict[str, object]
+    target: Path, session_id: str, hook_payload: dict[str, object], executor: str = EXECUTOR
 ) -> Path | None:
     base = harness_dir(target)
     run_dir = find_run_dir(base, session_id)
@@ -230,6 +292,8 @@ def handle_subagent_stop(
         writer_id=writer_id,
         event_type="subagent.completed",
         payload={"agent_type": hook_payload.get("agent_type")},
+        source=executor,
+        provider=PROVIDER if executor == EXECUTOR else executor,
     )
     write_event(run_dir, writer_id, event)
     return run_dir
@@ -238,17 +302,23 @@ def handle_subagent_stop(
 def dispatch(target: Path, hook_payload: dict[str, object]) -> None:
     if not telemetry_enabled(target):
         return
+
+    executor = EXECUTOR
+    if _is_cursor_payload(hook_payload):
+        hook_payload = _normalize_cursor_payload(hook_payload)
+        executor = "cursor"
+
     hook_event = hook_payload.get("hook_event_name")
     session_id = str(hook_payload.get("session_id", "unknown"))
 
     if hook_event == "SessionStart":
-        handle_session_start(target, session_id)
+        handle_session_start(target, session_id, executor=executor)
     elif hook_event == "SessionEnd":
         handle_session_end(target, session_id, hook_payload)
     elif hook_event in ("PreToolUse", "PostToolUse"):
-        handle_tool_use(target, session_id, str(hook_event), hook_payload)
+        handle_tool_use(target, session_id, str(hook_event), hook_payload, executor=executor)
     elif hook_event == "SubagentStop":
-        handle_subagent_stop(target, session_id, hook_payload)
+        handle_subagent_stop(target, session_id, hook_payload, executor=executor)
 
 
 def main() -> None:
@@ -264,7 +334,12 @@ def main() -> None:
         return
 
     hook_payload: dict[str, object] = raw
-    cwd = Path(str(hook_payload.get("cwd", "."))).resolve()
+    cwd_value = hook_payload.get("cwd")
+    if not cwd_value:
+        workspace_roots = hook_payload.get("workspace_roots")  # payload Cursor sem "cwd" direto
+        if isinstance(workspace_roots, list) and workspace_roots:
+            cwd_value = workspace_roots[0]
+    cwd = Path(str(cwd_value or ".")).resolve()
     try:
         dispatch(cwd, hook_payload)
     except Exception as exc:  # noqa: BLE001 — barreira intencional, nunca propaga pro Claude Code
