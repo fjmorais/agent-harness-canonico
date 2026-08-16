@@ -1,0 +1,18 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://agent-harness-canonico/schemas/workflow-state.schema.json",
+  "title": "Workflow State (execução ativa — heartbeat, não fase de projeto)",
+  "type": "object",
+  "properties": {
+    "schema_version": { "type": "string", "const": "1.0" },
+    "project_id": { "type": "string", "minLength": 1 },
+    "active_run_id": { "type": ["string", "null"] },
+    "active_writers": {
+      "type": "array",
+      "items": { "type": "string", "minLength": 1 }
+    },
+    "updated_at": { "type": "string", "format": "date-time" }
+  },
+  "required": ["schema_version", "project_id", "active_run_id", "active_writers", "updated_at"],
+  "additionalProperties": false
+}

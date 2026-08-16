@@ -1,0 +1,47 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://agent-harness-canonico/schemas/execution-event.schema.json",
+  "title": "Execution Event",
+  "type": "object",
+  "properties": {
+    "schema_version": { "type": "string", "const": "1.0" },
+    "event_id": { "type": "string", "minLength": 1 },
+    "project_id": { "type": "string", "minLength": 1 },
+    "run_id": { "type": "string", "minLength": 1 },
+    "writer_id": { "type": "string", "minLength": 1 },
+    "source": { "type": "string", "minLength": 1 },
+    "provider": { "type": "string", "minLength": 1 },
+    "event_type": { "type": "string", "minLength": 1 },
+    "occurred_at": { "type": "string", "format": "date-time" },
+    "sequence": { "type": "integer", "minimum": 0 },
+    "parent_event_id": { "type": ["string", "null"] },
+    "correlation_id": { "type": ["string", "null"] },
+    "payload": { "type": "object" },
+    "privacy": {
+      "type": "object",
+      "properties": {
+        "contains_prompt": { "type": "boolean" },
+        "contains_pii": { "type": "boolean" }
+      },
+      "required": ["contains_prompt", "contains_pii"],
+      "additionalProperties": false
+    }
+  },
+  "required": [
+    "schema_version",
+    "event_id",
+    "project_id",
+    "run_id",
+    "writer_id",
+    "source",
+    "provider",
+    "event_type",
+    "occurred_at",
+    "sequence",
+    "parent_event_id",
+    "correlation_id",
+    "payload",
+    "privacy"
+  ],
+  "additionalProperties": false
+}

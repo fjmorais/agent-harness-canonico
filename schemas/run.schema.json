@@ -1,0 +1,41 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://agent-harness-canonico/schemas/run.schema.json",
+  "title": "Run",
+  "type": "object",
+  "properties": {
+    "schema_version": { "type": "string", "const": "1.0" },
+    "run_id": { "type": "string", "minLength": 1 },
+    "project_id": { "type": "string", "minLength": 1 },
+    "executor": { "type": "string", "minLength": 1 },
+    "provider": { "type": "string", "minLength": 1 },
+    "started_at": { "type": "string", "format": "date-time" },
+    "ended_at": { "type": ["string", "null"], "format": "date-time" },
+    "status": {
+      "type": "string",
+      "enum": [
+        "created",
+        "queued",
+        "running",
+        "waiting_approval",
+        "paused",
+        "completed",
+        "failed",
+        "cancelled",
+        "interrupted",
+        "recovering"
+      ]
+    }
+  },
+  "required": [
+    "schema_version",
+    "run_id",
+    "project_id",
+    "executor",
+    "provider",
+    "started_at",
+    "ended_at",
+    "status"
+  ],
+  "additionalProperties": false
+}
