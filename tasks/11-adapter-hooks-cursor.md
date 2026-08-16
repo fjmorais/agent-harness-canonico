@@ -32,8 +32,10 @@ Claude Code. Reaproveitar o núcleo de `scripts/harness_hook.py` (task 07: `_bui
       redaction/escrita — tested by: teste unitário com fixture de payload Cursor real.
 - [x] `.cursor/hooks.json` gerado pelo `install-harness` referencia os mesmos scripts do adapter
       Claude Code (sem duplicar lógica) — tested by: teste de integração do instalador.
-- [x] `capabilities.telemetry.cursor: true` é declarado no manifest quando o adapter está ativo
-      — tested by: teste unitário do manifest gerado.
+- [x] `capabilities.telemetry.cursor: true` é declarado no manifest quando (e só quando)
+      `scripts/harness_hook.py` está de fato alcançável no projeto-alvo; caso contrário
+      `"unavailable"`, nunca `true` incondicional — tested by: dois testes unitários, um por
+      ramificação (script ausente → `unavailable`; script presente → `true`).
 
 ## Notes
 
