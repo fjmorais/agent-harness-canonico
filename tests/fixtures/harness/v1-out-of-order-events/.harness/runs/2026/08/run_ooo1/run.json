@@ -1,0 +1,10 @@
+{
+  "schema_version": "1.0",
+  "run_id": "ooo1",
+  "project_id": "project_ooo",
+  "executor": "claude-code",
+  "provider": "anthropic",
+  "started_at": "2026-08-16T10:00:00+00:00",
+  "ended_at": "2026-08-16T10:05:00+00:00",
+  "status": "completed"
+}

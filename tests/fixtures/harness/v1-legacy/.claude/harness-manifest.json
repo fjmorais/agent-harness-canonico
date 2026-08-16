@@ -1,0 +1,16 @@
+{
+  "manifest_schema_version": "2.0",
+  "harness_version": "0.1.0",
+  "canonical_path": "/home/fabiano/agent-harness-canonico",
+  "installed_at": "2025-01-01",
+  "mode": "ATUALIZACAO",
+  "capabilities": {
+    "workflow": true,
+    "dev_loop": true,
+    "delivery_metrics": true,
+    "telemetry": {
+      "claude_code": true
+    }
+  },
+  "artefacts": {}
+}

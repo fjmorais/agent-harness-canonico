@@ -1,6 +1,6 @@
 # Suíte de fixtures completa (cenários de compatibilidade)
 
-**Status:** not started
+**Status:** done
 **Blocked by:** 03-scaffold-projeto-novo.md, 04-update-seguro.md, 07-adapter-hooks-claude-code.md, 12-harness-doctor.md, 14-harness-prune.md
 
 ## What to build
@@ -17,17 +17,17 @@ de schema), eventos duplicados/fora de ordem, crash durante escrita (arquivo tem
 
 ## Acceptance criteria
 
-- [ ] Fixture de "projeto legado" (schema mais antigo que N-1) existe e o doctor a classifica
+- [x] Fixture de "projeto legado" (schema mais antigo que N-1) existe e o doctor a classifica
       `outdated` — tested by: teste de integração com a fixture nova.
-- [ ] Fixture de "eventos duplicados/fora de ordem" existe e `rebuild_timeline()` (task 06)
+- [x] Fixture de "eventos duplicados/fora de ordem" existe e `rebuild_timeline()` (task 06)
       produz uma ordem consistente mesmo assim — tested by: teste de integração com a fixture
       nova.
-- [ ] Fixture de "crash durante escrita" (arquivo temporário deixado para trás) existe e o
+- [x] Fixture de "crash durante escrita" (arquivo temporário deixado para trás) existe e o
       instalador/doctor detecta e recupera (ou reporta) o temporário órfão — tested by: teste
       de integração com a fixture nova.
-- [ ] Fixture de "espelhamento `.claude/`/`.cursor/`" existe e o checksum (task 12) cobre as
+- [x] Fixture de "espelhamento `.claude/`/`.cursor/`" existe e o checksum (task 12) cobre as
       duas árvores de forma consistente — tested by: teste de integração com a fixture nova.
-- [ ] Todas as fixtures da seção 7 do plano original estão listadas em
+- [x] Todas as fixtures da seção 7 do plano original estão listadas em
       `tests/fixtures/harness/README.md` com o cenário que cada uma cobre e a task/teste que a
       exercita — no test — é um documento de rastreabilidade, não código executável.
 

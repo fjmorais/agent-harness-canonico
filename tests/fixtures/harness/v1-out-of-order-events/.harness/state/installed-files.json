@@ -1,0 +1,11 @@
+{
+  "schema_version": "1.0",
+  "files": {
+    ".gitignore": "sha256:0576a0f75b2bceace4035eca70a17e496284b11ae877904e3d0d2c9a583990b5",
+    "README.md": "sha256:2d60b78e5b093a5755dcd4889af887098a522501d5bb62d90b68d177e8ded0f6",
+    "audit/audit.jsonl": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "config.json": "sha256:03366c10f59c14854fc35130b78187a1896c3b868d91332fbac23df83d8cc170",
+    "state/current-workflow.json": "sha256:5d4a633a2e38eda7a8ae3c8af78ec920c64ad732743a3e4c1c2d4bbbfe8c4f38",
+    "state/project.json": "sha256:ee1d6a293f1e1035ea0f6cfaa0b8ad9537699de4baa112cbe824c4402107e543"
+  }
+}

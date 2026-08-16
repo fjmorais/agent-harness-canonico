@@ -4,6 +4,9 @@ import json
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
 
+import pytest
+
+import scripts.harness_prune as harness_prune
 from scripts.harness_prune import apply_prune, plan_prune
 from scripts.harness_scaffold import apply_harness_scaffold, harness_dir
 
@@ -89,6 +92,33 @@ def test_prune_never_touches_another_project(tmp_path: Path) -> None:
 
     assert not old_run_a.exists()
     assert old_run_b.exists()  # projeto b não foi tocado
+
+
+def test_apply_prune_continues_after_individual_removal_failure(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    target = _install_with_retention(tmp_path, days=30)
+    now = datetime.now(UTC)
+    old_run_1 = _make_run(target, "old1", now - timedelta(days=60))
+    old_run_2 = _make_run(target, "old2", now - timedelta(days=90))
+
+    real_rmtree = harness_prune.shutil.rmtree
+    calls = []
+
+    def flaky_rmtree(path: Path) -> None:
+        calls.append(path)
+        if len(calls) == 1:
+            raise OSError("permissão negada (simulado)")
+        real_rmtree(path)
+
+    monkeypatch.setattr(harness_prune.shutil, "rmtree", flaky_rmtree)
+
+    result = apply_prune(target, confirm=True)
+
+    assert result["failed"] == 1
+    assert result["removed"] == 1
+    assert len(calls) == 2  # não abortou no primeiro erro — tentou o segundo candidato também
+    assert old_run_1.exists() or old_run_2.exists()  # exatamente um dos dois sobreviveu
 
 
 def test_plan_prune_is_pure_never_writes(tmp_path: Path) -> None:

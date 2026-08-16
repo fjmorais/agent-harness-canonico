@@ -10,6 +10,7 @@ from __future__ import annotations
 import argparse
 import json
 import shutil
+import sys
 from dataclasses import dataclass
 from datetime import UTC, datetime
 from pathlib import Path
@@ -69,10 +70,17 @@ def apply_prune(target: Path, confirm: bool) -> dict[str, int]:
         return {"would_remove": len(candidates), "removed": 0}
 
     removed = 0
+    failed = 0
     for candidate in candidates:
-        shutil.rmtree(candidate.path)
-        removed += 1
-    return {"would_remove": len(candidates), "removed": removed}
+        try:
+            shutil.rmtree(candidate.path)
+            removed += 1
+        except OSError as exc:
+            # ferramenta administrativa manual — reporta e segue pros próximos candidatos em
+            # vez de abortar o batch inteiro (ex.: permissão negada, removido por outro processo)
+            print(f"harness_prune: falha ao remover {candidate.run_id}: {exc}", file=sys.stderr)
+            failed += 1
+    return {"would_remove": len(candidates), "removed": removed, "failed": failed}
 
 
 def main() -> None:

@@ -145,6 +145,18 @@ def _schema_compatibility_status(project_path: Path) -> dict[str, object]:
     }
 
 
+def detect_orphaned_temp_files(project_path: Path) -> list[Path]:
+    """Lista arquivos `*.tmp` órfãos dentro de `.harness/` — evidência de escrita interrompida
+    por crash (protocolo de escrita segura da seção 6 do plano original: tmp + rename atômico;
+    um `.tmp` sobrevivendo significa que o rename nunca aconteceu). Só relata — não remove nem
+    tenta recuperar sozinho, decisão de limpeza fica com o operador (mesmo espírito de
+    `harness_prune.py`: nunca destrutivo sem confirmação)."""
+    base = harness_dir(project_path)
+    if not base.exists():
+        return []
+    return sorted(base.rglob("*.tmp"))
+
+
 def diagnose(project_path: Path) -> dict[str, object]:
     """Diagnóstico honesto por capability. Nunca retorna `0`/valor fabricado para dado
     desconhecido — sempre `None`/`"blocked"`/`"unavailable"` com motivo explícito."""
@@ -165,6 +177,7 @@ def diagnose(project_path: Path) -> dict[str, object]:
             },
             "telemetry": _diagnose_telemetry(manifest),
             "schema_compatibility": _schema_compatibility_status(project_path),
+            "orphaned_temp_files": [str(p) for p in detect_orphaned_temp_files(project_path)],
         }
 
     file_statuses = _diagnose_files(project_path, registered)
@@ -178,4 +191,5 @@ def diagnose(project_path: Path) -> dict[str, object]:
         "capabilities": capabilities,
         "telemetry": _diagnose_telemetry(manifest),
         "schema_compatibility": _schema_compatibility_status(project_path),
+        "orphaned_temp_files": [str(p) for p in detect_orphaned_temp_files(project_path)],
     }

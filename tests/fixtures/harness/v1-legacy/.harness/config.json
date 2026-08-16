@@ -1,0 +1,18 @@
+{
+  "schema_version": "0.1",
+  "project_id": "project_432f1afdae3a62304ea1f9c24ba7f20a",
+  "project_name": "projeto-legado",
+  "created_at": "2026-08-16T02:40:19.920638+00:00",
+  "telemetry": {
+    "enabled": false,
+    "capture_prompts": false,
+    "capture_tool_details": false
+  },
+  "retention": {
+    "days": 365
+  },
+  "storage": {
+    "operational_logs": "local",
+    "aggregated_metrics": "git"
+  }
+}
