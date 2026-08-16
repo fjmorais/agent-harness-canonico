@@ -7,7 +7,7 @@ código de produto/web no repositório. Ver `PRD.md` e `docs/adr/001-observabili
 | # | Título | Status | Blocked by |
 |---|---|---|---|
 | [01](01-schemas-core.md) | Schemas core (execution-event, run, usage, project-state, workflow-state) | done | none |
-| [02](02-schemas-complementares.md) | Schemas complementares (manifest, config, run-result, delivery-record, compatibility) | not started | none |
+| [02](02-schemas-complementares.md) | Schemas complementares (manifest, config, run-result, delivery-record, compatibility) | done | none |
 | [03](03-scaffold-projeto-novo.md) | Scaffold `.harness/` para projeto novo | not started | 01, 02 |
 | [04](04-update-seguro.md) | Update seguro de `.harness/` existente | not started | 03 |
 | [05](05-harness-redact.md) | `harness_redact.py` — redaction PII/prompt/secret | not started | 01 |

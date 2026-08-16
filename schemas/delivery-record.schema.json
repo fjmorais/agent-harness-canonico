@@ -1,0 +1,61 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://agent-harness-canonico/schemas/delivery-record.schema.json",
+  "title": "Delivery Record (tradução de metrics/entregas.jsonl)",
+  "type": "object",
+  "properties": {
+    "schema_version": { "type": "string", "const": "1.0" },
+    "project_id": { "type": "string", "minLength": 1 },
+    "run_id": { "type": ["string", "null"] },
+    "issue": { "type": "integer", "minimum": 1 },
+    "titulo": { "type": "string", "minLength": 1 },
+    "data": { "type": "string" },
+    "criterios_aceite": {
+      "type": "object",
+      "properties": {
+        "total": { "type": "integer", "minimum": 0 },
+        "atendidos": { "type": "integer", "minimum": 0 }
+      },
+      "required": ["total", "atendidos"],
+      "additionalProperties": false
+    },
+    "gate": {
+      "type": "object",
+      "properties": {
+        "resultado": { "type": "string", "enum": ["verde", "vermelho"] },
+        "tentativas_ate_verde": { "type": "integer", "minimum": 1 }
+      },
+      "required": ["resultado", "tentativas_ate_verde"],
+      "additionalProperties": false
+    },
+    "revisor": {
+      "type": "object",
+      "properties": {
+        "veredito": {
+          "type": "string",
+          "enum": ["aprovado", "aprovado com ressalvas", "bloqueado"]
+        },
+        "bloqueantes": { "type": "integer", "minimum": 0 },
+        "ressalvas": { "type": "integer", "minimum": 0 }
+      },
+      "required": ["veredito", "bloqueantes", "ressalvas"],
+      "additionalProperties": false
+    },
+    "intervencoes_humanas": { "type": "integer", "minimum": 0 },
+    "commit": { "type": "string", "minLength": 1 }
+  },
+  "required": [
+    "schema_version",
+    "project_id",
+    "run_id",
+    "issue",
+    "titulo",
+    "data",
+    "criterios_aceite",
+    "gate",
+    "revisor",
+    "intervencoes_humanas",
+    "commit"
+  ],
+  "additionalProperties": false
+}

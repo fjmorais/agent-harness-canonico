@@ -1,0 +1,49 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://agent-harness-canonico/schemas/harness-config.schema.json",
+  "title": "Harness Config",
+  "type": "object",
+  "properties": {
+    "schema_version": { "type": "string", "const": "1.0" },
+    "project_id": { "type": "string", "minLength": 1 },
+    "project_name": { "type": "string", "minLength": 1 },
+    "created_at": { "type": "string", "format": "date-time" },
+    "telemetry": {
+      "type": "object",
+      "properties": {
+        "enabled": { "type": "boolean" },
+        "capture_prompts": { "type": "boolean" },
+        "capture_tool_details": { "type": "boolean" }
+      },
+      "required": ["enabled", "capture_prompts", "capture_tool_details"],
+      "additionalProperties": false
+    },
+    "retention": {
+      "type": "object",
+      "properties": {
+        "days": { "type": "integer", "minimum": 1 }
+      },
+      "required": ["days"],
+      "additionalProperties": false
+    },
+    "storage": {
+      "type": "object",
+      "properties": {
+        "operational_logs": { "type": "string" },
+        "aggregated_metrics": { "type": "string" }
+      },
+      "required": ["operational_logs", "aggregated_metrics"],
+      "additionalProperties": false
+    }
+  },
+  "required": [
+    "schema_version",
+    "project_id",
+    "project_name",
+    "created_at",
+    "telemetry",
+    "retention",
+    "storage"
+  ],
+  "additionalProperties": false
+}

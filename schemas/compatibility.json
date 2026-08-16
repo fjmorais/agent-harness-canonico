@@ -1,0 +1,14 @@
+{
+  "policy": "current_and_previous",
+  "schemas": {
+    "execution-event": { "current": "1.0", "supported": ["1.0"] },
+    "run": { "current": "1.0", "supported": ["1.0"] },
+    "usage": { "current": "1.0", "supported": ["1.0"] },
+    "project-state": { "current": "1.0", "supported": ["1.0"] },
+    "workflow-state": { "current": "1.0", "supported": ["1.0"] },
+    "harness-manifest": { "current": "2.0", "supported": ["2.0"] },
+    "harness-config": { "current": "1.0", "supported": ["1.0"] },
+    "run-result": { "current": "1.0", "supported": ["1.0"] },
+    "delivery-record": { "current": "1.0", "supported": ["1.0"] }
+  }
+}

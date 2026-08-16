@@ -1,6 +1,6 @@
 # Schemas complementares (manifest, config, run-result, delivery-record, compatibility)
 
-**Status:** not started
+**Status:** done
 **Blocked by:** none
 
 ## What to build
@@ -15,19 +15,19 @@ de versões suportadas, N e N-1).
 
 ## Acceptance criteria
 
-- [ ] `schemas/harness-manifest.schema.json` v2 aceita `capabilities` com granularidade por
+- [x] `schemas/harness-manifest.schema.json` v2 aceita `capabilities` com granularidade por
       executor (ex.: `{"telemetry": {"claude_code": true, "cursor": "unavailable"}}`) — tested
       by: teste unitário com fixture de manifest multi-executor.
-- [ ] `schemas/harness-config.schema.json` valida `retention.days` como inteiro positivo e
+- [x] `schemas/harness-config.schema.json` valida `retention.days` como inteiro positivo e
       `telemetry.capture_prompts`/`capture_tool_details` como booleanos — tested by: teste
       unitário com payload válido e um com tipo errado.
-- [ ] `schemas/run-result.schema.json` publicado e validado contra um payload de exemplo —
+- [x] `schemas/run-result.schema.json` publicado e validado contra um payload de exemplo —
       tested by: teste unitário.
-- [ ] `schemas/delivery-record.schema.json` mapeia 1:1 os campos já existentes em
+- [x] `schemas/delivery-record.schema.json` mapeia 1:1 os campos já existentes em
       `metrics/entregas.jsonl` (ver `metrics/README.md`) mais os campos de correlação
       (`project_id`, `run_id`) — tested by: teste unitário que valida uma linha real de
       `metrics/entregas.jsonl` (se existir) ou uma fixture equivalente contra o schema.
-- [ ] `schemas/compatibility.json` declara a política N/N-1 de forma que um script consiga ler
+- [x] `schemas/compatibility.json` declara a política N/N-1 de forma que um script consiga ler
       programaticamente "quais versões são suportadas para o schema X" — tested by: teste
       unitário que consulta o compatibility.json para 2+ schemas.
 

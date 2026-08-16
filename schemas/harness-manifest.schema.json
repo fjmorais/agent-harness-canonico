@@ -1,0 +1,43 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://agent-harness-canonico/schemas/harness-manifest.schema.json",
+  "title": "Harness Manifest (v2)",
+  "type": "object",
+  "properties": {
+    "manifest_schema_version": { "type": "string", "const": "2.0" },
+    "harness_version": { "type": "string", "minLength": 1 },
+    "canonical_path": { "type": "string", "minLength": 1 },
+    "installed_at": { "type": "string" },
+    "mode": { "type": "string", "enum": ["NOVO", "SEM_HARNESS", "ATUALIZACAO"] },
+    "capabilities": {
+      "type": "object",
+      "properties": {
+        "workflow": { "type": "boolean" },
+        "dev_loop": { "type": "boolean" },
+        "delivery_metrics": { "type": "boolean" },
+        "telemetry": {
+          "type": "object",
+          "additionalProperties": {
+            "anyOf": [
+              { "type": "boolean" },
+              { "type": "string", "enum": ["unavailable", "blocked"] }
+            ]
+          }
+        }
+      },
+      "required": ["workflow", "dev_loop", "delivery_metrics", "telemetry"],
+      "additionalProperties": false
+    },
+    "artefacts": { "type": "object" }
+  },
+  "required": [
+    "manifest_schema_version",
+    "harness_version",
+    "canonical_path",
+    "installed_at",
+    "mode",
+    "capabilities",
+    "artefacts"
+  ],
+  "additionalProperties": false
+}
