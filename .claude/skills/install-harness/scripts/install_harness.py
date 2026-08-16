@@ -66,15 +66,23 @@ def _import_harness_scaffold(canonical: Path) -> tuple[object, ...] | None:
 
 
 def _enable_cursor_telemetry_capability(target: Path) -> None:
-    """Marca `capabilities.telemetry.cursor = true` no manifest v2 já gravado por
-    `write_manifest()`. Chamado depois do scaffold/update do `.harness/`, nunca antes —
-    `write_manifest()` já rodou e o manifest existe neste ponto."""
+    """Marca `capabilities.telemetry.cursor` no manifest v2 já gravado por `write_manifest()`.
+    Chamado depois do scaffold/update do `.harness/`, nunca antes.
+
+    NUNCA declara `true` incondicionalmente — `scripts/harness_hook.py` (o script que
+    `.cursor/hooks.json` referencia) não é propagado para projetos-alvo pelo `install-harness`
+    hoje (gap documentado em `tasks/11-adapter-hooks-cursor.md`). Declarar `true` sem o script
+    existir de fato no destino seria exatamente o "zero silencioso"/valor fabricado que
+    `harness_doctor.py` (task 12) existe para evitar — `harness_doctor` trata `true` como `ok`
+    sem verificação adicional. Só `true` quando o script está de fato alcançável no projeto;
+    caso contrário `"unavailable"` com motivo, formato já suportado pelo schema (task 02)."""
     manifest = read_manifest(target)
     if manifest is None:
         return
     capabilities = manifest.setdefault("capabilities", {})
     telemetry = capabilities.setdefault("telemetry", {})
-    telemetry["cursor"] = True
+    script_reachable = (target / "scripts" / "harness_hook.py").exists()
+    telemetry["cursor"] = True if script_reachable else "unavailable"
     manifest_path = target / MANIFEST_REL
     manifest_path.write_text(
         json.dumps(manifest, indent=2, ensure_ascii=False) + "\n", encoding="utf-8"

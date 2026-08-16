@@ -79,8 +79,8 @@ def test_json_apply_creates_full_harness_structure(tmp_path: Path) -> None:
 
     manifest = json.loads((target / ".claude" / "harness-manifest.json").read_text())
     assert manifest["manifest_schema_version"] == "2.0"
-    # telemetry.cursor: true é gravado pelo adapter Cursor (task 11) — .cursor/hooks.json
-    # sempre é gerado junto com o scaffold do .harness/, claude_code fica de fora até o
-    # dogfooding real de cada projeto habilitar (config.json.telemetry.enabled).
-    assert manifest["capabilities"]["telemetry"] == {"cursor": True}
+    # telemetry.cursor: "unavailable" porque scripts/harness_hook.py não foi propagado pro
+    # projeto-alvo (gap documentado na task 11) — nunca "true" sem o script existir de fato
+    # no destino, senão harness_doctor reportaria "ok" sobre uma capability morta.
+    assert manifest["capabilities"]["telemetry"] == {"cursor": "unavailable"}
     assert (target / ".cursor" / "hooks.json").exists()

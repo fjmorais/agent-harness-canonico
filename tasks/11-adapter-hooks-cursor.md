@@ -43,23 +43,46 @@ registra um risco residual: o spike não testou hooks Cursor rodando de verdade,
 documentação — esta task deve validar contra uma sessão Cursor real antes de fechar, não confiar
 só na simulação de payload.
 
+**Bloqueante corrigido (revisor-codigo, 2026-08-16):** a primeira versão gravava
+`capabilities.telemetry.cursor: true` incondicionalmente, sempre que `.cursor/hooks.json` era
+gerado — mesmo em projetos-alvo reais onde `scripts/harness_hook.py` **não existe** (não é
+propagado pelo `install-harness`, ver abaixo). `harness_doctor.py` trata `true` como `ok` sem
+verificação adicional, então isso era exatamente o tipo de "zero silencioso"/valor fabricado que
+a task 12 existe para evitar — uma capability declarada ok que na prática nunca produz evento
+nenhum. O revisor apontou corretamente que isso não é o mesmo tipo de dívida técnica aceitável
+das ressalvas anteriores (que documentavam incompletude sem fazer o manifest mentir) — é uma
+afirmação ativamente falsa para o caso de uso principal do feature.
+
+**Correção aplicada:** `_enable_cursor_telemetry_capability()` agora checa se
+`scripts/harness_hook.py` está de fato alcançável em `target/scripts/harness_hook.py` antes de
+declarar `true` — caso contrário declara `"unavailable"` (formato já suportado pelo schema desde
+a task 02). Na prática, hoje isso significa: `true` só quando o alvo é o próprio canônico
+(dogfooding, onde o script já existe); `"unavailable"` em qualquer instalação real via
+`/install-harness`, honestamente, até a propagação do script existir.
+
+**Correção de uma alegação errada:** a nota anterior dizia "mesmo padrão simplificado já usado
+para `telemetry.claude_code` nas tasks anteriores" — o revisor verificou que isso é falso:
+`capabilities.telemetry.claude_code` nunca é setado por código de produção em lugar nenhum do
+repositório (só aparece em fixtures/testes). Não havia precedente — esta nota estava incorreta e
+foi removida.
+
 **Riscos residuais explícitos (não resolvidos por esta task):**
 - **Nunca testado contra uma sessão Cursor real** — toda a suíte de testes usa payloads
   simulados fielmente à documentação (`docs/adr/002...`), não uma sessão Cursor de verdade
   disparando o hook. Se o payload real divergir do documentado, o adapter pode falhar
   silenciosamente (mitigado pela mesma barreira de exceção do `main()` — nunca quebra a sessão
   do usuário, mas também pode nunca gravar evento nenhum sem ninguém perceber).
-- **`capabilities.telemetry.cursor: true` é gravado sempre que `.cursor/hooks.json` é gerado**,
-  não quando o adapter está genuinamente "ativo" no sentido de `config.json.telemetry.enabled`
-  estar ligado — o nome do campo no manifest pode sugerir mais garantia do que o valor
-  realmente significa (mesmo padrão simplificado já usado para `telemetry.claude_code` nas
-  tasks anteriores).
 - **`provider` para eventos Cursor é setado igual ao nome do executor** (`"cursor"`), não ao
   provider real do modelo em uso (Cursor suporta múltiplos providers) — simplificação por falta
   de sinal confiável no payload documentado; refinar se o campo `model`/`model_id` do payload
   base do Cursor precisar ser exposto no futuro.
 - **Script `scripts/harness_hook.py` não é copiado para projetos-alvo** pelo `install-harness`
-  hoje — `.cursor/hooks.json` (e `.claude/settings.json` equivalente da task 07) referenciam um
-  script que só existe de fato no canônico. Isso funciona para o dogfooding deste próprio repo,
-  mas é um gap real de propagação para projetos instalados via `/install-harness` — fica como
-  trabalho futuro, fora do escopo desta task.
+  hoje — este é o gap real de propagação, agora honestamente refletido no manifest (`unavailable`
+  em vez de `true` fabricado). Propagar o script (e suas dependências: `harness_event_writer.py`,
+  `harness_redact.py`, `harness_scaffold.py`, `harness_deliveries.py`, `schema_validation.py`,
+  `schemas/*.json`) pra projetos-alvo fica como trabalho futuro — só então `telemetry.cursor`
+  (e, pela mesma lógica, `telemetry.claude_code`) poderiam legitimamente virar `true` fora do
+  dogfooding deste canônico.
+- `docs/adr/002-viabilidade-hooks-cursor.md` sinalizou que Cursor tem `tool_use_id`/
+  `conversation_id` estáveis — mais informação de correlação do que o Claude Code expõe hoje.
+  Não aproveitado aqui; `correlation_id` continua `None` fixo mesmo no caminho Cursor.
