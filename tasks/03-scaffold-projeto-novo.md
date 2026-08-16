@@ -1,6 +1,6 @@
 # Scaffold `.harness/` para projeto novo
 
-**Status:** not started
+**Status:** done
 **Blocked by:** 01-schemas-core.md, 02-schemas-complementares.md
 
 ## What to build
@@ -22,19 +22,19 @@ já existente do `install-harness`).
 
 ## Acceptance criteria
 
-- [ ] Rodar o instalador contra um diretório sem `.harness/` cria a estrutura completa listada
+- [x] Rodar o instalador contra um diretório sem `.harness/` cria a estrutura completa listada
       acima — tested by: teste de integração usando fixture `tests/fixtures/harness/v1-fresh/`
       (diretório de entrada vazio) e comparando a árvore de saída.
-- [ ] `project_id` gerado é um hash determinístico de `path + timestamp`, gravado uma vez em
+- [x] `project_id` gerado é um hash determinístico de `path + timestamp`, gravado uma vez em
       `state/project.json` — tested by: teste unitário chamando a função de geração duas vezes
       com o mesmo input e validando que produz o mesmo hash.
-- [ ] `.gitignore` gerado ignora exatamente `runs/**`, `audit/**`, `indexes/**` e versiona
+- [x] `.gitignore` gerado ignora exatamente `runs/**`, `audit/**`, `indexes/**` e versiona
       `README.md`, `config.json`, `state/project.json` — tested by: teste unitário lendo o
       `.gitignore` gerado e checando os padrões.
-- [ ] `state/installed-files.json` contém checksum de todo arquivo gerado pelo scaffold —
+- [x] `state/installed-files.json` contém checksum de todo arquivo gerado pelo scaffold —
       tested by: teste de integração que recalcula o hash de um arquivo gerado e compara com o
       valor registrado.
-- [ ] Install Plan exibe a estrutura completa antes de gravar qualquer arquivo — tested by:
+- [x] Install Plan exibe a estrutura completa antes de gravar qualquer arquivo — tested by:
       teste de integração no modo `--json`, verificando que a resposta de "plan" lista todas as
       operações antes de `--apply`.
 

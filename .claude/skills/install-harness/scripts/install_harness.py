@@ -34,6 +34,15 @@ DEFAULT_CANONICAL = "/home/fabiano/agent-harness-canonico"
 MANIFEST_REL = ".claude/harness-manifest.json"
 KEYWORD_FILES = ["pyproject.toml", "package.json"]  # fallback: scan bruto se o parse estruturado falhar
 
+# scripts/harness_scaffold.py vive na raiz do canônico (não em .claude/skills/) — ver task 03.
+sys.path.insert(0, str(Path(__file__).resolve().parents[4]))
+try:
+    from scripts.harness_scaffold import apply_harness_scaffold, harness_dir, plan_harness_scaffold
+except ImportError:  # canônico sendo usado como CLI standalone fora do repo agent-harness-canonico
+    apply_harness_scaffold = None  # type: ignore[assignment]
+    harness_dir = None  # type: ignore[assignment]
+    plan_harness_scaffold = None  # type: ignore[assignment]
+
 
 # --------------------------------------------------------------------------- detecção
 
@@ -606,13 +615,25 @@ def apply_plan(plan: list[dict], target: Path, canonical: Path, project_name: st
     return counts
 
 
+HARNESS_VERSION = "0.1.0"
+
+
 def write_manifest(target: Path, canonical: Path, mode: str, artefacts: dict) -> None:
     manifest_path = target / MANIFEST_REL
     manifest_path.parent.mkdir(parents=True, exist_ok=True)
+    previous = read_manifest(target) or {}
     manifest = {
+        "manifest_schema_version": "2.0",
+        "harness_version": HARNESS_VERSION,
         "canonical_path": str(canonical),
         "installed_at": date.today().isoformat(),
         "mode": mode,
+        "capabilities": previous.get("capabilities") or {
+            "workflow": True,
+            "dev_loop": True,
+            "delivery_metrics": True,
+            "telemetry": {},
+        },
         "artefacts": artefacts,
     }
     manifest_path.write_text(json.dumps(manifest, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
@@ -710,8 +731,16 @@ def main() -> None:
     force_categories = frozenset(args.force_category)
     plan = build_plan(target, canonical, stack_map, manifest, signals, force_categories, args.force_all)
 
+    # .harness/ scaffold — só para projeto novo (sem .harness/ ainda). Update seguro é task 04.
+    harness_plan = None
+    if plan_harness_scaffold is not None and harness_dir is not None and not harness_dir(target).exists():
+        harness_plan = plan_harness_scaffold(target)
+
     if args.json:
-        print(json.dumps(plan_to_json(plan, mode, signals), indent=2, ensure_ascii=False))
+        plan_json = plan_to_json(plan, mode, signals)
+        if harness_plan is not None:
+            plan_json["harness_scaffold"] = harness_plan.as_json()
+        print(json.dumps(plan_json, indent=2, ensure_ascii=False))
         if args.dry_run or not args.decisions_file:
             return
         decisions = json.loads(Path(args.decisions_file).read_text(encoding="utf-8"))
@@ -719,10 +748,18 @@ def main() -> None:
         project_name = target.name
         stack_summary = ", ".join(sorted(signals["keywords"])) or "(genérica)"
         counts = apply_plan(plan, target, canonical, project_name, stack_summary, mode, manifest)
-        print(json.dumps({"applied": counts}, indent=2, ensure_ascii=False))
+        applied = {"applied": counts}
+        if harness_plan is not None and apply_harness_scaffold is not None:
+            applied["harness_scaffold"] = apply_harness_scaffold(target, project_name)
+        print(json.dumps(applied, indent=2, ensure_ascii=False))
         return
 
     print_plan_human(plan, mode, signals)
+    if harness_plan is not None:
+        print("## .harness/ — scaffold (projeto novo)")
+        for op in harness_plan.operations:
+            print(f"- {op.action}: .harness/{op.path}")
+        print()
     if args.dry_run:
         return
 
@@ -744,6 +781,9 @@ def main() -> None:
     project_name = target.name
     stack_summary = ", ".join(sorted(signals["keywords"])) or "(genérica)"
     counts = apply_plan(plan, target, canonical, project_name, stack_summary, mode, manifest)
+    if harness_plan is not None and apply_harness_scaffold is not None:
+        apply_harness_scaffold(target, project_name)
+        print(".harness/ criado.")
     print(f"\nFeito: {summarize(counts)}.")
     print("\nPróximos passos:")
     print("  1. /grill-with-docs — preencher CONTEXT.md com terminologia real do domínio")
