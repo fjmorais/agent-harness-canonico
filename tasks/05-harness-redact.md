@@ -1,6 +1,6 @@
 # `harness_redact.py` — redaction de PII/prompt/secret
 
-**Status:** not started
+**Status:** done
 **Blocked by:** 01-schemas-core.md
 
 ## What to build
@@ -13,17 +13,17 @@ estruturalmente limitado a campos sem texto livre — ver ADR-001, Opção I).
 
 ## Acceptance criteria
 
-- [ ] `redact()` mascara CPF em qualquer campo de texto do payload (ex.: `123.456.789-00` vira
+- [x] `redact()` mascara CPF em qualquer campo de texto do payload (ex.: `123.456.789-00` vira
       `***.***.***-**`) — tested by: teste unitário com fixture de payload contendo CPF.
-- [ ] `redact()` mascara email — tested by: teste unitário com fixture contendo email.
-- [ ] `redact()` mascara path de usuário (ex.: `/home/<user>/...`) — tested by: teste unitário
+- [x] `redact()` mascara email — tested by: teste unitário com fixture contendo email.
+- [x] `redact()` mascara path de usuário (ex.: `/home/<user>/...`) — tested by: teste unitário
       com fixture de path absoluto.
-- [ ] `redact()` mascara padrões conhecidos de API key/token (ex.: prefixos comuns de secret) —
+- [x] `redact()` mascara padrões conhecidos de API key/token (ex.: prefixos comuns de secret) —
       tested by: teste unitário com fixture de string parecida com token.
-- [ ] `redact()` preserva campos não sensíveis do payload inalterados (não mascara demais) —
+- [x] `redact()` preserva campos não sensíveis do payload inalterados (não mascara demais) —
       tested by: teste unitário verificando que campos como `event_type`, `tool`, `exit_code`
       permanecem idênticos após redaction.
-- [ ] `redact()` é idempotente (rodar duas vezes no mesmo payload já redigido não muda o
+- [x] `redact()` é idempotente (rodar duas vezes no mesmo payload já redigido não muda o
       resultado) — tested by: teste unitário chamando `redact(redact(payload))` e comparando.
 
 ## Notes
