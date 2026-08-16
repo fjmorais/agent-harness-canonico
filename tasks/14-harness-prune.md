@@ -1,6 +1,6 @@
 # `harness_prune.py` — retenção manual confirmada
 
-**Status:** not started
+**Status:** done
 **Blocked by:** 03-scaffold-projeto-novo.md
 
 ## What to build
@@ -13,15 +13,15 @@ apesar de `runs/**` não ter backup no Git).
 
 ## Acceptance criteria
 
-- [ ] `--dry-run` (padrão) lista os runs que seriam removidos, sem apagar nada — tested by:
+- [x] `--dry-run` (padrão) lista os runs que seriam removidos, sem apagar nada — tested by:
       teste de integração com fixture de `runs/` contendo entradas antigas e recentes,
       validando que nenhum arquivo é removido após `--dry-run`.
-- [ ] Sem `--confirm`, nenhuma exclusão ocorre mesmo se o usuário rodar sem `--dry-run` — tested
+- [x] Sem `--confirm`, nenhuma exclusão ocorre mesmo se o usuário rodar sem `--dry-run` — tested
       by: teste de integração verificando que a flag de confirmação é obrigatória para remover.
-- [ ] Com `--confirm`, apenas os runs fora da janela de retenção são removidos; runs recentes
+- [x] Com `--confirm`, apenas os runs fora da janela de retenção são removidos; runs recentes
       permanecem intactos — tested by: teste de integração com fixture mista, validando a lista
       final de runs após execução confirmada.
-- [ ] O script nunca toca `runs/**` de outro projeto (escopo restrito ao `.harness/` do projeto
+- [x] O script nunca toca `runs/**` de outro projeto (escopo restrito ao `.harness/` do projeto
       apontado) — tested by: teste de integração com dois projetos fixture, validando que só um
       é afetado.
 
