@@ -23,7 +23,7 @@ já existente do `install-harness`).
 ## Acceptance criteria
 
 - [x] Rodar o instalador contra um diretório sem `.harness/` cria a estrutura completa listada
-      acima — tested by: teste de integração usando fixture `tests/fixtures/harness/v1-fresh/`
+      acima — tested by: teste de integração usando fixture `tests/scripts/fixtures/harness/v1-fresh/`
       (diretório de entrada vazio) e comparando a árvore de saída.
 - [x] `project_id` gerado é um hash determinístico de `path + timestamp`, gravado uma vez em
       `state/project.json` — tested by: teste unitário chamando a função de geração duas vezes
@@ -49,6 +49,6 @@ por padrão no `config.json` evita que hooks tentem escrever antes de C2 estar i
 - `ImportError` amplo trocado por `ModuleNotFoundError` restrito ao nome do módulo — erro real
   de bug no `harness_scaffold.py` propaga em vez de ser mascarado.
 - Aviso explícito impresso quando o scaffold não está disponível (CLI standalone fora do repo).
-- `tests/fixtures/harness/v1-fresh/` ficou como placeholder — os testes reais usam `tmp_path`
+- `tests/scripts/fixtures/harness/v1-fresh/` ficou como placeholder — os testes reais usam `tmp_path`
   diretamente; a fixture estática será populada de fato na task 15 (suíte de fixtures
   completa), que é onde os cenários da seção 7 do plano original são consolidados.

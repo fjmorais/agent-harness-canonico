@@ -12,7 +12,7 @@ Cada subpasta aqui corresponde a um projeto iniciado via `/novo-projeto` (ou `ha
     ├── 01-grill.md             ← Q&A da sessão /grill-me (harness-define salva)
     ├── 02-prd.md               ← cópia do PRD.md gerado pelo /to-prd
     ├── 03-harness.md           ← decisões do /harness-architect (o que foi gerado e por quê)
-    ├── 04-tasks-index.md       ← sumário das tasks criadas + link para tasks/
+    ├── 04-tasks-index.md       ← sumário das tasks criadas + link para tasks/{slug}/
     └── 05-retro.md             ← retrospectiva ao shippar (harness-ship cria)
 ```
 
@@ -24,7 +24,7 @@ Cada subpasta aqui corresponde a um projeto iniciado via `/novo-projeto` (ou `ha
 2. 02-prd.md         /to-prd → harness-design
 3. 03-harness.md     /harness-architect → harness-design
 4. 04-tasks-index.md /to-tasks
-5. (build)           harness-build (tasks/NN-*.md)
+5. (build)           harness-build (tasks/{slug}/NN-*.md)
 6. 05-retro.md       harness-ship → /scorecard
 ```
 

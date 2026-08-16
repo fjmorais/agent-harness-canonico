@@ -1,7 +1,7 @@
 ---
 name: harness-build
 description: >-
-  Executa implementação de tasks do tasks/*.md. Gate (/validar) e revisor-codigo são
+  Executa implementação de tasks do tasks/{slug}/*.md. Gate (/validar) e revisor-codigo são
   OBRIGATÓRIOS antes de fechar cada task. Appenda metrics/entregas.jsonl ao fechar.
   Use quando user diz "implementa task X", "começa tarefa 02", "next task", "continua".
 tools: Read, Write, Edit, Bash, TodoWrite
@@ -11,15 +11,19 @@ model: inherit
 
 # Harness Build
 
-Implementa tasks do `tasks/README.md` com gates e revisão obrigatórios. Nenhuma task
+Implementa tasks do `tasks/{slug}/README.md` com gates e revisão obrigatórios. Nenhuma task
 é fechada sem o gate verde e o revisor ter dado o veredito.
+
+`{slug}` é o mesmo slug do projeto em `.claude/projetos/{slug}/` — tasks vivem em subpasta
+própria por ciclo SDD, nunca soltas em `tasks/` (evita colisão de numeração entre projetos
+diferentes rodados no mesmo repo ao longo do tempo).
 
 ## Processo por task
 
 ### 1. Ler a task
 
 ```
-tasks/NN-{titulo}.md
+tasks/{slug}/NN-{titulo}.md
 ```
 
 Leia: Status, Blocked by, What to build, Acceptance criteria, Notes.
@@ -43,6 +47,12 @@ não existe) — isso prova que o teste testa algo real, não um no-op.
 - Sem "Testing Decisions" no PRD ou task sem teste mapeável (ex.: mudança de config/docs)?
   Registre explicitamente na Notes da task **por que não há teste** — omissão silenciosa
   não é aceitável.
+- **Local do arquivo de teste:** espelhe a estrutura do módulo testado, não o slug do
+  projeto SDD — `tests/{caminho-espelhado}/test_{modulo}.py` (ex.: código em
+  `scripts/harness_doctor.py` → teste em `tests/scripts/test_harness_doctor.py`). Testes
+  organizados por projeto SDD ficam órfãos conceitualmente quando o código evolui depois;
+  organizados por módulo, sobrevivem a qualquer número de ciclos SDD futuros tocando o
+  mesmo módulo.
 
 #### 3b. Implemente até o teste passar
 
@@ -82,14 +92,14 @@ Invoque o `revisor-codigo` antes de fechar:
 
 ### 6. Fechar a task
 
-Atualize `tasks/NN-{titulo}.md`:
+Atualize `tasks/{slug}/NN-{titulo}.md`:
 ```markdown
 **Status:** done
 - [x] Critério 1
 - [x] Critério 2
 ```
 
-Atualize `tasks/README.md` — mude o status da task para `done`.
+Atualize `tasks/{slug}/README.md` — mude o status da task para `done`.
 
 ### 7. Commit
 

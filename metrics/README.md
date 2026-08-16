@@ -34,7 +34,7 @@ O `/scorecard` lê este arquivo para calcular as métricas de entrega.
 
 | Campo | Tipo | Descrição |
 |---|---|---|
-| `issue` | int | Número da task (NN do arquivo tasks/NN-*.md) |
+| `issue` | int | Número da task (NN do arquivo tasks/{slug}/NN-*.md) |
 | `titulo` | string | Título da task |
 | `data` | string | Data de fechamento (YYYY-MM-DD) |
 | `criterios_aceite.total` | int | Total de critérios na task |

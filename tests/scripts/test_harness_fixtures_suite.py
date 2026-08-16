@@ -1,5 +1,5 @@
 """Suíte de fixtures completa (task 15) — cenários de compatibilidade da seção 7 do plano
-original, usando fixtures estáticas versionadas em tests/fixtures/harness/."""
+original, usando fixtures estáticas versionadas em tests/scripts/fixtures/harness/."""
 
 from __future__ import annotations
 

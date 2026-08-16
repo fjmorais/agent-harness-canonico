@@ -32,7 +32,7 @@ commit/PR** e devolver um parecer acionável. Você revisa; você **não edita**
    - Todo arquivo com lógica nova ou alterada (não config/docs/rename puro) precisa ter um
      arquivo de teste correspondente tocado no mesmo diff.
    - Se a task tem critérios de aceite sem teste mapeado, a ausência precisa estar
-     justificada explicitamente nas Notes da task (`tasks/NN-*.md`) — se não estiver, é
+     justificada explicitamente nas Notes da task (`tasks/{slug}/NN-*.md`) — se não estiver, é
      bloqueante.
    - Teste comentado, `skip` mudo, ou teste que não falha antes da implementação (não prova
      nada) conta como ausência de teste.

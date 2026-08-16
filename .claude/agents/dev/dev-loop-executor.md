@@ -122,6 +122,6 @@ estatísticas e informação de recovery.
 ## O que NÃO faz
 
 - Não cria o PROMPT do zero — isso é `prompt-crafter`
-- Não substitui `harness-build` — aquele executa tasks de um projeto inteiro (`tasks/NN-*.md`
+- Não substitui `harness-build` — aquele executa tasks de um projeto inteiro (`tasks/{slug}/NN-*.md`
   gerado por `/to-tasks`), com gate + `revisor-codigo` obrigatórios; este executa um `PROMPT.md`
   avulso, mais leve, sem gate obrigatório

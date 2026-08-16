@@ -44,6 +44,12 @@ Ver `references/test-templates.md` para os templates completos (pytest com fixtu
 felizes/casos de borda, vitest + Testing Library, e `conftest.py` para fixtures compartilhadas).
 Seguir a mesma estrutura: fixtures → casos felizes → casos de borda.
 
+**Local do arquivo:** espelhe o caminho do módulo testado dentro de `tests/` (ex.: código em
+`scripts/harness_doctor.py` → teste em `tests/scripts/test_harness_doctor.py`; `app/services/
+billing.py` → `tests/app/services/test_billing.py`). Nunca solto na raiz de `tests/` quando o
+projeto já tem mais de um pacote/módulo — a estrutura espelhada deixa óbvio o que cada teste
+cobre e sobrevive independente de qual sessão/projeto SDD o criou.
+
 ### Passo 4 — Verificar cobertura
 
 ```bash

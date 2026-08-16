@@ -10,7 +10,7 @@ from pathlib import Path
 
 from scripts.harness_scaffold import apply_harness_scaffold, harness_dir
 
-CANONICAL = Path(__file__).resolve().parent.parent
+CANONICAL = Path(__file__).resolve().parent.parent.parent
 HOOK_SCRIPT = CANONICAL / "scripts" / "harness_hook.py"
 
 

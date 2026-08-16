@@ -28,22 +28,22 @@ Quanto mais cedo a fase afetada, maior a cascata.
 
 ```
 00-ideia.md mudou?
-  → afeta: 01-grill, 02-prd, 03-harness, tasks/*
+  → afeta: 01-grill, 02-prd, 03-harness, tasks/{slug}/*
   → pode afetar: CLAUDE.md, .claude/rules/, .claude/agents/ (se tipo mudou)
 
 01-grill.md mudou?
-  → afeta: 02-prd, 03-harness, tasks/*
+  → afeta: 02-prd, 03-harness, tasks/{slug}/*
   → pode afetar: out-of-scope, critérios de aceite
 
 02-prd.md mudou?
-  → afeta: 03-harness (se stack mudou), tasks/*
+  → afeta: 03-harness (se stack mudou), tasks/{slug}/*
   → pode afetar: critérios de aceite já implementados (tasks "done")
 
 03-harness.md mudou?
-  → afeta: tasks/* (se harness gerou novas regras ou agentes)
+  → afeta: tasks/{slug}/* (se harness gerou novas regras ou agentes)
   → impacto em tasks "done" → marque como "needs-review"
 
-tasks/* mudou?
+tasks/{slug}/* mudou?
   → afeta apenas tasks subsequentes (blockers)
 ```
 
@@ -56,7 +56,7 @@ Edite o artefato da fase mais cedo afetada:
 .claude/projetos/{slug}/01-grill.md  ← se requisitos mudaram
 .claude/projetos/{slug}/02-prd.md    ← se solução/scope mudou
 .claude/projetos/{slug}/03-harness.md ← se componentes do harness mudaram
-tasks/NN-{titulo}.md                  ← se critérios de uma task mudaram
+tasks/{slug}/NN-{titulo}.md                  ← se critérios de uma task mudaram
 ```
 
 Adicione uma nota de mudança no topo do artefato:
@@ -70,7 +70,7 @@ Adicione uma nota de mudança no topo do artefato:
 Para cada artefato subsequente afetado:
 - **02-prd.md**: se `01-grill` mudou → identifique seções do PRD que contradizem o grill novo → atualize
 - **03-harness.md**: se o PRD mudou stack → identifique o que o `/harness-architect` precisaria gerar de diferente
-- **tasks/**:
+- **tasks/{slug}/**:
   - Tasks `not-started` → atualize critérios de aceite e descrição
   - Tasks `in-progress` → marque como `⚠ needs-review` no README + notifique o usuário
   - Tasks `done` → verifique se a mudança invalida o que foi entregue; se sim, crie nova task de ajuste
@@ -106,8 +106,8 @@ Atualizado: {artefato raiz} — {resumo da mudança}
 Cascata aplicada:
   ✅ 01-grill.md — atualizado (seção X)
   ✅ 02-prd.md — atualizado (seções Y, Z)
-  ⚠  tasks/03-*.md — marcado needs-review (critério A pode mudar)
-  ➡  tasks/05-*.md — não afetada (está bloqueada pelas anteriores)
+  ⚠  tasks/{slug}/03-*.md — marcado needs-review (critério A pode mudar)
+  ➡  tasks/{slug}/05-*.md — não afetada (está bloqueada pelas anteriores)
 
 Próximo passo: revise tasks marcadas como needs-review antes de continuar o build.
 ```

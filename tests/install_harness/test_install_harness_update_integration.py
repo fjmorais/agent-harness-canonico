@@ -8,7 +8,7 @@ import subprocess
 import sys
 from pathlib import Path
 
-CANONICAL = Path(__file__).resolve().parent.parent
+CANONICAL = Path(__file__).resolve().parent.parent.parent
 INSTALL_SCRIPT = (
     CANONICAL / ".claude" / "skills" / "install-harness" / "scripts" / "install_harness.py"
 )

@@ -17,7 +17,7 @@ Encerra o projeto com métricas reais, aprendizados registrados e STATUS.md arqu
 
 ### 1. Verificar estado antes de shippar
 
-- Leia `tasks/README.md` — todas as tasks têm `Status: done`?
+- Leia `tasks/{slug}/README.md` — todas as tasks têm `Status: done`?
 - Leia `metrics/entregas.jsonl` — todas as tasks têm registro?
 - Leia `docs/adr/` — todas as decisões contestáveis foram documentadas?
 

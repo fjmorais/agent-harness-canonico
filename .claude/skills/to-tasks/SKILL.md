@@ -1,19 +1,26 @@
 ---
 name: to-tasks
-description: Break a plan, spec, or PRD into local task files (tasks/*.md) using tracer-bullet vertical slices. Use when user wants to convert a plan into local markdown tasks, work offline without GitHub, or implement step-by-step without a remote issue tracker.
+description: Break a plan, spec, or PRD into local task files (tasks/{slug}/*.md) using tracer-bullet vertical slices. Use when user wants to convert a plan into local markdown tasks, work offline without GitHub, or implement step-by-step without a remote issue tracker.
 ---
 
 # To Tasks
 
 Break a plan into independently-implementable local task files using vertical slices (tracer bullets).
 
-Task files live in `tasks/` at the project root. No GitHub required — everything stays local.
+Task files live in `tasks/{slug}/` at the project root — one subfolder per SDD project/cycle, never
+flat in `tasks/`. Multiple `/novo-projeto` cycles running over the life of a repo would otherwise
+collide on numbering (`tasks/01-*.md` from one cycle vs. another) and make it impossible to tell
+which tasks belong to which plan. No GitHub required — everything stays local.
 
 ## Process
 
-### 1. Gather context
+### 1. Gather context and determine {slug}
 
 Work from whatever is already in the conversation context. If the user passes a file path as an argument (e.g. `PRD.md`), read it. Otherwise look for `PRD.md` at the project root or ask the user to point to the source document.
+
+Determine `{slug}` — the subfolder this cycle's tasks will live in:
+- If this is part of the `/novo-projeto` SDD flow, the slug already exists at `.claude/projetos/{slug}/` (derived by `harness-brainstorm`). Reuse it — don't invent a new one.
+- Otherwise (standalone `/to-tasks` invocation, no active SDD project), derive a short kebab-case slug from the plan/PRD title and confirm it with the user before writing any file.
 
 ### 2. Explore the codebase (optional)
 
@@ -46,12 +53,12 @@ Iterate until the user approves the breakdown.
 
 ### 5. Write local task files
 
-For each approved slice, create a file in the `tasks/` directory. Use this naming convention:
+For each approved slice, create a file in the `tasks/{slug}/` directory. Use this naming convention:
 
 ```
-tasks/01-short-title.md
-tasks/02-short-title.md
-tasks/03-short-title.md
+tasks/{slug}/01-short-title.md
+tasks/{slug}/02-short-title.md
+tasks/{slug}/03-short-title.md
 ```
 
 Numbers are zero-padded to two digits and reflect the implementation order (blockers first). Title is kebab-case, max 5 words.
@@ -85,9 +92,9 @@ the seam). If a criterion genuinely has no test (e.g. pure config/docs change), 
 Any decisions, constraints, or context the implementer needs to know. Leave blank if none.
 </task-template>
 
-### 6. Create tasks/README.md
+### 6. Create tasks/{slug}/README.md
 
-After writing all task files, create (or update) `tasks/README.md` with:
+After writing all task files, create (or update) `tasks/{slug}/README.md` with:
 
 - A table listing all tasks: number, title, status, blocked-by
 - One-line description of the overall goal
@@ -106,7 +113,7 @@ When the user says "implement task X" or "start task 03":
 4. Implement the vertical slice until the tests from step 3 pass
 5. Run `/validar` (gate ruff + mypy + pytest)
 6. Update the task file: change `Status:` to `done` and tick all acceptance criteria
-7. Update `tasks/README.md` status table
+7. Update `tasks/{slug}/README.md` status table
 8. Commit all changes with message `feat(task-NN): <title>` — only after gate is green
 9. Append one line to `metrics/entregas.jsonl` (create the file if it doesn't exist)
 

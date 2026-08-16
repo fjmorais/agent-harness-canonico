@@ -49,7 +49,7 @@ Use estes checkpoints conforme avança no fluxo:
 4. /to-prd                    → gera PRD.md
 5. /harness-architect         → gera o .claude/ específico do projeto
 6. harness-design             → salva PRD e decisões de harness
-7. /to-tasks                  → cria tasks/NN-*.md
+7. /to-tasks                  → cria tasks/{slug}/NN-*.md
 8. harness-build              → implementa task a task (gate + revisor)
 9. harness-ship               → scorecard + retrospectiva + fecha
 ```

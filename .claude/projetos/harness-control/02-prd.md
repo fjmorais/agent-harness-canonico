@@ -233,7 +233,7 @@ status reportado corretamente) — nunca detalhe de implementação interna do s
 - **Schemas**: validação pura contra fixtures (payloads válidos e inválidos por schema),
   sem I/O — roda em qualquer ambiente sem depender de sessão real do Claude Code.
 - **`install_harness.py`** (extensão do script existente): testado pelo mesmo seam que já usa hoje
-  (modo `--json`, entrada/saída determinística) — fixtures de projeto (`tests/fixtures/harness/
+  (modo `--json`, entrada/saída determinística) — fixtures de projeto (`tests/scripts/fixtures/harness/
   v1-fresh/`, `v1-with-runs/`, `v1-customized/` etc.) cobrindo os cenários da seção 7 do plano
   original (instalação nova, update sem `.harness/`, update com logs existentes, migration
   aprovada/cancelada, preservação de customização).

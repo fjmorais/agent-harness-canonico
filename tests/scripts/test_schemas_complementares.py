@@ -6,7 +6,7 @@ from pathlib import Path
 
 from scripts.schema_validation import supported_versions, validate
 
-METRICS_ENTREGAS_PATH = Path(__file__).resolve().parent.parent / "metrics" / "entregas.jsonl"
+METRICS_ENTREGAS_PATH = Path(__file__).resolve().parent.parent.parent / "metrics" / "entregas.jsonl"
 
 VALID_MANIFEST = {
     "manifest_schema_version": "2.0",

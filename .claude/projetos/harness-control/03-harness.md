@@ -25,7 +25,7 @@ de hook, `project_id` por hash imutável.
 - Extensão de `install_harness.py` para scaffold `.harness/`
 - Hooks em `.claude/settings.json` (novos, específicos deste projeto de evolução — não
   confundir com os hooks que `install-harness` propaga para projetos-filhos)
-- `tests/fixtures/harness/` (v1-fresh, v1-with-runs, v1-customized, etc.)
+- `tests/scripts/fixtures/harness/` (v1-fresh, v1-with-runs, v1-customized, etc.)
 
 ## Decisões contestáveis (ver docs/adr/001 para detalhes)
 - Run = sessão inteira (não turno, não task individual)

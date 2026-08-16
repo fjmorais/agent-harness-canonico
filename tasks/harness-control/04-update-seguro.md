@@ -17,7 +17,7 @@ após confirmação explícita, fazer backup antes de qualquer migration estrutu
 
 - [x] Rodar o instalador contra um projeto com `.harness/` de versão anterior e `runs/` já
       populado preserva `runs/` intacto (nenhum arquivo removido ou reescrito) — tested by:
-      teste de integração usando fixture `tests/fixtures/harness/v1-with-runs/`, comparando
+      teste de integração usando fixture `tests/scripts/fixtures/harness/v1-with-runs/`, comparando
       hash dos arquivos de `runs/` antes e depois.
 - [x] `project_id` e `config.json` custom (ex.: `retention.days` alterado manualmente) não são
       sobrescritos pelo update — tested by: teste de integração com fixture tendo config
@@ -38,6 +38,6 @@ vs. "gerado pelo instalador" (atualizável).
 
 **Desvio do critério de aceite (revisor-codigo, 2026-08-16):** os testes usam
 `apply_harness_scaffold` + `tmp_path` para montar o cenário "`.harness/` já existente" em vez da
-fixture estática `tests/fixtures/harness/v1-with-runs/` citada no critério de aceite —
+fixture estática `tests/scripts/fixtures/harness/v1-with-runs/` citada no critério de aceite —
 funcionalmente equivalente (prova o mesmo invariante de preservação de `runs/`), mesmo padrão de
 desvio já documentado na task 03. A fixture estática real será criada na task 15.

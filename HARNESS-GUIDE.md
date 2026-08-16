@@ -61,7 +61,7 @@ agentes de domínio, e configura `.mcp.json` com os stores do projeto.
 ## Fase 3 — Implementar
 
 ```
-/to-tasks          # cria tasks/NN-*.md a partir do PRD (sem GitHub)
+/to-tasks          # cria tasks/{slug}/NN-*.md a partir do PRD (sem GitHub)
 /to-issues         # cria GitHub Issues (requer gh CLI)
 ```
 
@@ -114,7 +114,7 @@ Gera retrospectiva em `05-retro.md`, fecha `STATUS.md`, roda `/scorecard`.
 | `/grill-me` | Entrevista relentless sobre plano ou design | Aprofundar ideia antes de virar PRD |
 | `/grill-with-docs` | Grilling contra documentação de domínio existente | Preencher `CONTEXT.md` com especialista |
 | `/to-prd` | Converte conversa em PRD e publica no tracker | Fechar requisitos em documento |
-| `/to-tasks` | Fatia PRD em `tasks/NN-*.md` locais | Quando não usa GitHub Issues |
+| `/to-tasks` | Fatia PRD em `tasks/{slug}/NN-*.md` locais | Quando não usa GitHub Issues |
 | `/to-issues` | Fatia PRD em GitHub Issues com labels e critérios | Quando usa GitHub como tracker |
 | `/gen-tests` | Gera testes pytest ou vitest para módulo/função | Após implementar um módulo |
 | `/new-adr` | Registra Architecture Decision Record em `docs/adr/` | Antes de commitar decisão contestável |

@@ -11,7 +11,7 @@ from scripts.harness_scaffold import (
     write_cursor_hooks_config,
 )
 
-CANONICAL = Path(__file__).resolve().parent.parent
+CANONICAL = Path(__file__).resolve().parent.parent.parent
 INSTALL_SCRIPT = (
     CANONICAL / ".claude" / "skills" / "install-harness" / "scripts" / "install_harness.py"
 )

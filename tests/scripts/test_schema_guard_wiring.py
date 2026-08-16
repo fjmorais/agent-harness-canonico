@@ -13,7 +13,7 @@ import pytest
 from scripts.harness_event_writer import write_event
 from scripts.harness_scaffold import apply_harness_scaffold, apply_harness_update, harness_dir
 
-CANONICAL = Path(__file__).resolve().parent.parent
+CANONICAL = Path(__file__).resolve().parent.parent.parent
 HOOK_SCRIPT = CANONICAL / "scripts" / "harness_hook.py"
 
 

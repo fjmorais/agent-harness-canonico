@@ -6,7 +6,7 @@
 ## What to build
 
 Consolidar e completar as fixtures parciais criadas nas tasks anteriores em
-`tests/fixtures/harness/`, cobrindo todos os cenários da seção 7 do plano original que ainda não
+`tests/scripts/fixtures/harness/`, cobrindo todos os cenários da seção 7 do plano original que ainda não
 têm teste dedicado: instalação nova (já coberto por 03), update sem `.harness/` (já coberto por
 04), update com logs existentes (já coberto por 04), migration aprovada e cancelada (já coberto
 por 04), preservação de customizações (já coberto por 04/12), projeto legado (versão bem antiga
@@ -34,7 +34,7 @@ de schema), eventos duplicados/fora de ordem, crash durante escrita (arquivo tem
       cobre as duas árvores", o que não é verdade; corrigido para refletir o que foi de fato
       entregue e testado.
 - [x] Todas as fixtures da seção 7 do plano original estão listadas em
-      `tests/fixtures/harness/README.md` com o cenário que cada uma cobre e a task/teste que a
+      `tests/scripts/fixtures/harness/README.md` com o cenário que cada uma cobre e a task/teste que a
       exercita — no test — é um documento de rastreabilidade, não código executável.
 
 ## Notes

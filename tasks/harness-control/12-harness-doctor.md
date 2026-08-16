@@ -17,10 +17,10 @@ lacuna sempre explícita.
 ## Acceptance criteria
 
 - [x] Projeto com todos os arquivos intactos reporta `ok` para todas as capabilities — tested
-      by: teste de integração com fixture `tests/fixtures/harness/v1-fresh/` pós-instalação.
+      by: teste de integração com fixture `tests/scripts/fixtures/harness/v1-fresh/` pós-instalação.
 - [x] Projeto com um arquivo do harness editado manualmente reporta `customized` só para aquele
       arquivo/capability, não para o projeto inteiro — tested by: teste de integração usando
-      fixture `tests/fixtures/harness/v1-customized/`.
+      fixture `tests/scripts/fixtures/harness/v1-customized/`.
 - [x] Projeto com um diretório esperado ausente (ex.: `.harness/audit/` nunca criado) reporta
       `missing` para a capability correspondente — tested by: teste de integração com fixture
       incompleta.

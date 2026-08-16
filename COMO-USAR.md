@@ -139,7 +139,7 @@ Para outros MCPs (Qdrant, MinIO, Databricks), o `/harness-architect` vai sugerir
 ## Passo 8 — Crie as tasks e implemente
 
 ```
-/to-tasks          # cria tasks/NN-*.md a partir do PRD
+/to-tasks          # cria tasks/{slug}/NN-*.md a partir do PRD
 harness-build      # implementa task a task
 ```
 
@@ -254,7 +254,7 @@ Na próxima sessão, o Claude lê o `HANDOFF.md` e retoma de onde parou.
 | `/grill-me` | Entrevista da ideia |
 | `/to-prd` | Gera PRD.md |
 | `/harness-architect` | Gera harness do projeto a partir do PRD |
-| `/to-tasks` | Fatia PRD em tasks locais (tasks/NN-*.md) |
+| `/to-tasks` | Fatia PRD em tasks locais (tasks/{slug}/NN-*.md) |
 | `/to-issues` | Fatia PRD em GitHub Issues |
 | `/validar` | Gate rápido: ruff + mypy + pytest |
 | `/scorecard` | Métricas de entrega (lê metrics/entregas.jsonl) |
