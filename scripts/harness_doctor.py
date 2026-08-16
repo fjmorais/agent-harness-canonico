@@ -12,6 +12,7 @@ import json
 from pathlib import Path
 
 from scripts.harness_scaffold import fingerprint_file, harness_dir
+from scripts.schema_validation import supported_versions
 
 MANIFEST_REL = ".claude/harness-manifest.json"
 
@@ -116,6 +117,34 @@ def _diagnose_telemetry(manifest: dict[str, object] | None) -> dict[str, dict[st
     return result
 
 
+def _schema_compatibility_status(project_path: Path) -> dict[str, object]:
+    """Compara `config.json.schema_version` contra a janela N/N-1 publicada em
+    `schemas/compatibility.json` — única fonte consultada, nunca hardcoded aqui."""
+    config_path = harness_dir(project_path) / "config.json"
+    if not config_path.exists():
+        return {"status": "blocked", "reason": "config.json ausente"}
+
+    try:
+        config = json.loads(config_path.read_text())
+    except json.JSONDecodeError:
+        return {"status": "blocked", "reason": "config.json ilegível"}
+
+    installed_version = str(config.get("schema_version", "unknown"))
+    try:
+        supported = supported_versions("harness-config")
+    except (KeyError, FileNotFoundError):
+        return {"status": "blocked", "reason": "schemas/compatibility.json ilegível ou incompleto"}
+
+    if installed_version in supported:
+        return {"status": "ok", "installed_version": installed_version, "supported": supported}
+    return {
+        "status": "outdated",
+        "installed_version": installed_version,
+        "supported": supported,
+        "reason": "schema_version fora da janela N/N-1 — rode uma migration (task 04)",
+    }
+
+
 def diagnose(project_path: Path) -> dict[str, object]:
     """Diagnóstico honesto por capability. Nunca retorna `0`/valor fabricado para dado
     desconhecido — sempre `None`/`"blocked"`/`"unavailable"` com motivo explícito."""
@@ -135,6 +164,7 @@ def diagnose(project_path: Path) -> dict[str, object]:
                 for cap in ("workflow", "dev_loop", "delivery_metrics")
             },
             "telemetry": _diagnose_telemetry(manifest),
+            "schema_compatibility": _schema_compatibility_status(project_path),
         }
 
     file_statuses = _diagnose_files(project_path, registered)
@@ -147,4 +177,5 @@ def diagnose(project_path: Path) -> dict[str, object]:
         "scaffold_checked_files_count": len(registered),
         "capabilities": capabilities,
         "telemetry": _diagnose_telemetry(manifest),
+        "schema_compatibility": _schema_compatibility_status(project_path),
     }

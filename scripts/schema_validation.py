@@ -56,3 +56,23 @@ def supported_versions(schema_name: str) -> list[str]:
     supported = entry["supported"]
     assert isinstance(supported, list)
     return [str(version) for version in supported]
+
+
+def _version_parts(version: str) -> tuple[int, ...]:
+    return tuple(int(part) for part in version.split("."))
+
+
+def is_schema_version_newer(a: str, b: str) -> bool:
+    """True se a versão `a` for mais nova que `b` (comparação numérica: '1.10' > '1.9')."""
+    return _version_parts(a) > _version_parts(b)
+
+
+def assert_write_compatible(pinned_version: str, payload_version: str) -> None:
+    """Rejeita escrita cujo payload declara uma `schema_version` mais nova que a versão fixada
+    no projeto — nunca grava silenciosamente algo à frente do que o projeto sabe interpretar.
+    Migration explícita (task 04) é o único jeito de avançar a versão fixada."""
+    if is_schema_version_newer(payload_version, pinned_version):
+        raise ValueError(
+            f"escrita rejeitada: schema_version do payload ({payload_version}) é mais nova que "
+            f"a versão fixada no projeto ({pinned_version}) — rode uma migration antes de escrever"
+        )

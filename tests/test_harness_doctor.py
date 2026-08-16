@@ -61,6 +61,15 @@ def test_missing_expected_file_reports_missing_for_its_capability(tmp_path: Path
     assert report["capabilities"]["workflow"]["status"] == "ok"
 
 
+def test_telemetry_declared_false_reports_missing_with_reason(tmp_path: Path) -> None:
+    apply_harness_scaffold(tmp_path, "meu-projeto")
+    _write_manifest(tmp_path, {"claude_code": False})
+
+    report = diagnose(tmp_path)
+    assert report["telemetry"]["claude_code"]["status"] == "missing"
+    assert report["telemetry"]["claude_code"]["reason"] is not None
+
+
 def test_unavailable_executor_reports_unavailable_with_reason_not_missing(tmp_path: Path) -> None:
     apply_harness_scaffold(tmp_path, "meu-projeto")
     _write_manifest(tmp_path, {"claude_code": True, "cursor": "unavailable"})
