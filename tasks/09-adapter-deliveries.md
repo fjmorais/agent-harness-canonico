@@ -1,6 +1,6 @@
 # Adapter `deliveries/` — derivação de `metrics/entregas.jsonl`
 
-**Status:** not started
+**Status:** done
 **Blocked by:** 03-scaffold-projeto-novo.md
 
 ## What to build
@@ -14,16 +14,16 @@ ADR-001).
 
 ## Acceptance criteria
 
-- [ ] Uma nova linha em `metrics/entregas.jsonl` gera a linha correspondente em
+- [x] Uma nova linha em `metrics/entregas.jsonl` gera a linha correspondente em
       `.harness/deliveries/deliveries.jsonl`, validada contra `delivery-record.schema.json` —
       tested by: teste de integração adicionando uma linha fixture e verificando a saída
       traduzida.
-- [ ] O adapter nunca modifica `metrics/entregas.jsonl` (só lê) — tested by: teste de
+- [x] O adapter nunca modifica `metrics/entregas.jsonl` (só lê) — tested by: teste de
       integração comparando hash do arquivo antes/depois de rodar o adapter.
-- [ ] Rodar o adapter duas vezes sobre o mesmo `metrics/entregas.jsonl` não duplica entradas em
+- [x] Rodar o adapter duas vezes sobre o mesmo `metrics/entregas.jsonl` não duplica entradas em
       `deliveries.jsonl` (idempotente) — tested by: teste unitário chamando o adapter duas
       vezes e contando linhas.
-- [ ] `/scorecard` continua funcionando sem nenhuma alteração no que lê — tested by: rodar o
+- [x] `/scorecard` continua funcionando sem nenhuma alteração no que lê — tested by: rodar o
       `/scorecard` existente antes e depois desta mudança e comparar a saída (regressão).
 
 ## Notes
