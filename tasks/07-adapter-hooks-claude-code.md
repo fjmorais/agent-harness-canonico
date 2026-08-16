@@ -1,6 +1,6 @@
 # Adapter de hooks — Claude Code
 
-**Status:** not started
+**Status:** done
 **Blocked by:** 03-scaffold-projeto-novo.md, 05-harness-redact.md, 06-escritor-evento-concorrente.md
 
 ## What to build
@@ -22,18 +22,18 @@ explícita (nunca inventar um valor).
 
 ## Acceptance criteria
 
-- [ ] Uma sessão real do Claude Code (rodada manualmente contra este canônico, com hooks
+- [x] Uma sessão real do Claude Code (rodada manualmente contra este canônico, com hooks
       ativos) cria `runs/YYYY/MM/run_<id>/` no `SessionStart` e fecha com estado terminal no
       `SessionEnd` — tested by: teste de integração/e2e disparando os hooks via simulação de
       evento (payload que o Claude Code passa para hooks) e verificando o `run.json` resultante.
-- [ ] Tool calls durante a sessão geram eventos em `events/<writer_id>.jsonl` já redigidos
+- [x] Tool calls durante a sessão geram eventos em `events/<writer_id>.jsonl` já redigidos
       (nenhum CPF/email/path de usuário cru no arquivo gravado) — tested by: teste de
       integração simulando um `PostToolUse` com payload contendo PII e verificando o evento
       gravado.
-- [ ] Um subagente disparado durante a sessão gera seu próprio arquivo de escritor, distinto do
+- [x] Um subagente disparado durante a sessão gera seu próprio arquivo de escritor, distinto do
       arquivo do agente principal — tested by: teste de integração simulando `SubagentStop` com
       `writer_id` diferente do principal.
-- [ ] `correlation_id` ausente é gravado como `null` explícito, nunca omitido silenciosamente do
+- [x] `correlation_id` ausente é gravado como `null` explícito, nunca omitido silenciosamente do
       payload — tested by: teste unitário verificando a estrutura do evento quando não há
       correlação disponível.
 

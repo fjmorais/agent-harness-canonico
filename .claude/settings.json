@@ -75,6 +75,36 @@
     ]
   },
   "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "uv run python3 scripts/harness_hook.py"
+          }
+        ]
+      }
+    ],
+    "SessionEnd": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "uv run python3 scripts/harness_hook.py"
+          }
+        ]
+      }
+    ],
+    "SubagentStop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "uv run python3 scripts/harness_hook.py"
+          }
+        ]
+      }
+    ],
     "PostToolUse": [
       {
         "matcher": "Edit|Write",
@@ -82,6 +112,14 @@
           {
             "type": "command",
             "command": "SRC=$([ -d backend ] && echo backend || [ -d src ] && echo src || echo ''); [ -z \"$SRC\" ] && exit 0; uv run ruff format $SRC 2>/dev/null; uv run ruff check --fix $SRC 2>/dev/null; true"
+          }
+        ]
+      },
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "uv run python3 scripts/harness_hook.py"
           }
         ]
       }

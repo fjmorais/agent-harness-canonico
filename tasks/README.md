@@ -12,7 +12,7 @@ código de produto/web no repositório. Ver `PRD.md` e `docs/adr/001-observabili
 | [04](04-update-seguro.md) | Update seguro de `.harness/` existente | done | 03 |
 | [05](05-harness-redact.md) | `harness_redact.py` — redaction PII/prompt/secret | done | 01 |
 | [06](06-escritor-evento-concorrente.md) | Escritor de evento concorrente + reconstrução de timeline | done | 01 |
-| [07](07-adapter-hooks-claude-code.md) | Adapter de hooks — Claude Code | not started | 03, 05, 06 |
+| [07](07-adapter-hooks-claude-code.md) | Adapter de hooks — Claude Code | done | 03, 05, 06 |
 | [08](08-agregacao-usage.md) | Agregação `usage.json` por modelo e correlação | not started | 06 |
 | [09](09-adapter-deliveries.md) | Adapter `deliveries/` — derivação de `metrics/entregas.jsonl` | not started | 03 |
 | [10](10-spike-viabilidade-cursor.md) | Spike: viabilidade de hooks equivalentes no Cursor | not started | none |

@@ -8,6 +8,7 @@ precisar de lock. Ver docs/adr/001-observabilidade-harness-control.md, Opção E
 from __future__ import annotations
 
 import json
+from datetime import datetime
 from pathlib import Path
 
 from scripts.schema_validation import validate
@@ -36,8 +37,10 @@ def write_event(run_dir: Path, writer_id: str, event: dict[str, object]) -> Path
     return path
 
 
-def _sort_key(event: dict[str, object]) -> tuple[str, int, str]:
-    occurred_at = str(event.get("occurred_at", ""))
+def _sort_key(event: dict[str, object]) -> tuple[datetime, int, str]:
+    # normaliza para instante comparável — comparar string crua quebraria silenciosamente se
+    # escritores diferentes usassem offsets de timezone diferentes (ex.: UTC vs. -03:00).
+    occurred_at = datetime.fromisoformat(str(event.get("occurred_at", "1970-01-01T00:00:00+00:00")))
     sequence_raw = event.get("sequence", 0)
     sequence = int(sequence_raw) if isinstance(sequence_raw, (int, str)) else 0
     writer_id = str(event.get("writer_id", ""))
