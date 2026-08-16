@@ -28,3 +28,12 @@ sessão.
 
 Consumir sempre via `rebuild_timeline()` (task 06), nunca ler os arquivos de escritor
 diretamente — evita duplicar a lógica de mesclagem/ordenação.
+
+**Contrato produtor/consumidor (revisor-codigo, 2026-08-16):** esta task define a convenção
+`event_type == "usage.recorded"` com payload `{model_id, input, output, cache_read,
+cache_write, reasoning}`, mas **nenhum código do repositório hoje emite esse evento** — o
+`harness_hook.py` (task 07) só emite `tool.executed` e `subagent.completed`. `aggregate_usage()`
+está correto e testado, mas em qualquer run real hoje sempre cai no bucket vazio `"model_id":
+"none"`. O Claude Code expõe uso de token via hooks (`PostToolUse`/transcript) — conectar essa
+ponta (emitir `usage.recorded` de fato) fica como trabalho futuro, fora do escopo das 15 tasks
+originais deste projeto; registrar como item de acompanhamento antes do ship.
