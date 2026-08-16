@@ -42,3 +42,12 @@ explícita (nunca inventar um valor).
 Esta task instrumenta o próprio canônico primeiro (dogfooding) — os hooks em
 `.claude/settings.json` deste repo passam a valer também para o Dev Loop e os fluxos SDD já
 existentes, conforme a decisão da Pergunta 2 do grill.
+
+**Correção pós-revisão (revisor-codigo, 2026-08-16):** `main()`/`dispatch()` não tinham
+tratamento de exceção — como o hook está wireado em `PostToolUse` sem matcher (dispara em toda
+tool call da sessão), um payload malformado ou `.harness/` corrompido quebraria silenciosamente
+a cada chamada. Corrigido: `main()` captura JSON inválido, payload não-dict, e qualquer exceção
+de `dispatch()`, sempre loga em stderr e sai limpo (nunca propaga pro Claude Code). Testes de
+regressão em `tests/test_harness_hook_cli_integration.py`. Também corrigido:
+`handle_session_end` agora lê o campo `reason` do payload de `SessionEnd` e mapeia pra
+`failed`/`cancelled`/`completed` (antes sempre gravava `completed`, ignorando o resultado real).

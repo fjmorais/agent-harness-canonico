@@ -44,6 +44,27 @@ def test_session_end_closes_run_with_terminal_status(tmp_path: Path) -> None:
     assert run["ended_at"] is not None
 
 
+def test_session_end_maps_error_reason_to_failed_status(tmp_path: Path) -> None:
+    target = _install_with_telemetry(tmp_path)
+    dispatch(
+        target, {"hook_event_name": "SessionStart", "session_id": "sess_1", "cwd": str(target)}
+    )
+    dispatch(
+        target,
+        {
+            "hook_event_name": "SessionEnd",
+            "session_id": "sess_1",
+            "cwd": str(target),
+            "reason": "tool_execution_error",
+        },
+    )
+
+    run_dir = find_run_dir(harness_dir(target), "sess_1")
+    assert run_dir is not None
+    run = json.loads((run_dir / "run.json").read_text())
+    assert run["status"] == "failed"
+
+
 def test_post_tool_use_writes_redacted_event(tmp_path: Path) -> None:
     target = _install_with_telemetry(tmp_path)
     dispatch(

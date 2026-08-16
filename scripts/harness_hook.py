@@ -93,7 +93,20 @@ def handle_session_start(target: Path, session_id: str) -> Path:
     return run_dir
 
 
-def handle_session_end(target: Path, session_id: str) -> Path | None:
+def _terminal_status_from_reason(reason: object) -> str:
+    """Best-effort: o payload de SessionEnd do Claude Code traz um campo `reason` sem enum
+    documentado com confiança — mapeamento conservador, `completed` é o default seguro."""
+    reason_str = str(reason or "").lower()
+    if "error" in reason_str or "fail" in reason_str:
+        return "failed"
+    if "cancel" in reason_str:
+        return "cancelled"
+    return "completed"
+
+
+def handle_session_end(
+    target: Path, session_id: str, hook_payload: dict[str, object] | None = None
+) -> Path | None:
     base = harness_dir(target)
     run_dir = find_run_dir(base, session_id)
     if run_dir is None:
@@ -101,7 +114,7 @@ def handle_session_end(target: Path, session_id: str) -> Path | None:
 
     run = json.loads((run_dir / "run.json").read_text())
     run["ended_at"] = _now()
-    run["status"] = "completed"
+    run["status"] = _terminal_status_from_reason((hook_payload or {}).get("reason"))
     _write_run_json(run_dir, run)
 
     timeline = rebuild_timeline(run_dir)
@@ -229,7 +242,7 @@ def dispatch(target: Path, hook_payload: dict[str, object]) -> None:
     if hook_event == "SessionStart":
         handle_session_start(target, session_id)
     elif hook_event == "SessionEnd":
-        handle_session_end(target, session_id)
+        handle_session_end(target, session_id, hook_payload)
     elif hook_event in ("PreToolUse", "PostToolUse"):
         handle_tool_use(target, session_id, str(hook_event), hook_payload)
     elif hook_event == "SubagentStop":
@@ -237,9 +250,23 @@ def dispatch(target: Path, hook_payload: dict[str, object]) -> None:
 
 
 def main() -> None:
-    hook_payload = json.load(sys.stdin)
+    """Nunca deixa telemetria quebrar a sessão do usuário — qualquer falha (payload malformado,
+    .harness/ corrompido, etc.) é logada em stderr e engolida; o hook sempre sai limpo."""
+    try:
+        raw = json.load(sys.stdin)
+    except json.JSONDecodeError as exc:
+        print(f"harness_hook: payload JSON inválido, ignorando: {exc}", file=sys.stderr)
+        return
+    if not isinstance(raw, dict):
+        print("harness_hook: payload não é um objeto JSON, ignorando", file=sys.stderr)
+        return
+
+    hook_payload: dict[str, object] = raw
     cwd = Path(str(hook_payload.get("cwd", "."))).resolve()
-    dispatch(cwd, hook_payload)
+    try:
+        dispatch(cwd, hook_payload)
+    except Exception as exc:  # noqa: BLE001 — barreira intencional, nunca propaga pro Claude Code
+        print(f"harness_hook: erro ao processar hook (ignorado): {exc}", file=sys.stderr)
 
 
 if __name__ == "__main__":
