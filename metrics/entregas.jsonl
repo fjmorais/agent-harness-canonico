@@ -1,0 +1,1 @@
+{"issue": 1, "titulo": "schemas core (execution-event, run, usage, project-state, workflow-state)", "data": "2026-08-16", "criterios_aceite": {"total": 5, "atendidos": 5}, "gate": {"resultado": "verde", "tentativas_ate_verde": 1}, "revisor": {"veredito": "aprovado com ressalvas", "bloqueantes": 0, "ressalvas": 4}, "intervencoes_humanas": 0, "commit": "b7efe75"}
