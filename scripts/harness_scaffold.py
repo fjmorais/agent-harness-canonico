@@ -13,7 +13,7 @@ from dataclasses import dataclass, field
 from datetime import UTC, datetime
 from pathlib import Path
 
-from scripts.schema_validation import current_version
+from scripts.schema_validation import assert_write_compatible, current_version
 
 HARNESS_DIRNAME = ".harness"
 
@@ -227,6 +227,15 @@ def plan_harness_update(target: Path) -> UpdatePlan:
     return plan
 
 
+def _read_config_schema_version(base: Path) -> str | None:
+    config_path = base / "config.json"
+    if not config_path.exists():
+        return None
+    config = json.loads(config_path.read_text())
+    version = config.get("schema_version")
+    return str(version) if version is not None else None
+
+
 def _default_content_for(rel_path: str, project_name: str) -> str:
     if rel_path == "README.md":
         return _readme_content(project_name)
@@ -248,34 +257,50 @@ def _default_content_for(rel_path: str, project_name: str) -> str:
 
 def apply_harness_update(
     target: Path, project_name: str, confirm_migrations: bool = False
-) -> dict[str, int]:
+) -> dict[str, object]:
     """Aplica só o que está no plano: cria itens ausentes; aplica migrations apenas se
     `confirm_migrations=True` (nunca implícito). Nunca toca `runs/`, `deliveries/`,
     `project_id` ou campos de config já customizados além de `schema_version`."""
     base = harness_dir(target)
     plan = plan_harness_update(target)
 
+    pinned_version = _read_config_schema_version(base)
+
     created = 0
+    skipped_incompatible: list[str] = []
     for op in plan.create_operations:
         path = base / op.path
         if op.action == "create_directory":
             path.mkdir(parents=True, exist_ok=True)
+            created += 1
+            continue
+
+        if op.path == "state/current-workflow.json":
+            # project_id precisa ser lido do project.json existente, não inventado
+            project_state = json.loads((base / "state" / "project.json").read_text())
+            payload: dict[str, object] = {
+                "schema_version": "1.0",
+                "project_id": project_state["project_id"],
+                "active_run_id": None,
+                "active_writers": [],
+                "updated_at": datetime.now(UTC).isoformat(),
+            }
+            if pinned_version is not None:
+                try:
+                    assert_write_compatible(
+                        pinned_version=pinned_version,
+                        payload_version=str(payload["schema_version"]),
+                    )
+                except ValueError:
+                    # nunca aborta o batch inteiro por causa de um arquivo — task 09 já
+                    # estabeleceu esse padrão para o adapter de deliveries.
+                    skipped_incompatible.append(op.path)
+                    continue
+            path.write_text(
+                json.dumps(payload, indent=2, ensure_ascii=False) + "\n", encoding="utf-8"
+            )
         else:
-            if op.path == "state/current-workflow.json":
-                # project_id precisa ser lido do project.json existente, não inventado
-                project_state = json.loads((base / "state" / "project.json").read_text())
-                payload = {
-                    "schema_version": "1.0",
-                    "project_id": project_state["project_id"],
-                    "active_run_id": None,
-                    "active_writers": [],
-                    "updated_at": datetime.now(UTC).isoformat(),
-                }
-                path.write_text(
-                    json.dumps(payload, indent=2, ensure_ascii=False) + "\n", encoding="utf-8"
-                )
-            else:
-                path.write_text(_default_content_for(op.path, project_name), encoding="utf-8")
+            path.write_text(_default_content_for(op.path, project_name), encoding="utf-8")
         created += 1
 
     backups = 0
@@ -318,7 +343,12 @@ def apply_harness_update(
         encoding="utf-8",
     )
 
-    return {"created": created, "migrations_applied": migrations_applied, "backups": backups}
+    return {
+        "created": created,
+        "migrations_applied": migrations_applied,
+        "backups": backups,
+        "skipped_incompatible": skipped_incompatible,
+    }
 
 
 # ------------------------------------------------------------------ adapter Cursor (task 11)

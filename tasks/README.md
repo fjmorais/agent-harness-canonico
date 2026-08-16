@@ -21,7 +21,7 @@ código de produto/web no repositório. Ver `PRD.md` e `docs/adr/001-observabili
 | [13](13-compatibilidade-schema.md) | Validação de compatibilidade de schema (N / N-1) | done | 01, 02, 04 |
 | [14](14-harness-prune.md) | `harness_prune.py` — retenção manual confirmada | done | 03 |
 | [15](15-suite-fixtures-completa.md) | Suíte de fixtures completa (cenários de compatibilidade) | done | 03, 04, 07, 12, 14 |
-| [16](16-wire-schema-guard.md) | Wireear assert_write_compatible nos writers reais | not started | 13 |
+| [16](16-wire-schema-guard.md) | Wireear assert_write_compatible nos writers reais | done | 13 |
 
 ## Fases
 

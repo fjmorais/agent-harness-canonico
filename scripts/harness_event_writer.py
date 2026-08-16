@@ -11,22 +11,52 @@ import json
 from datetime import datetime
 from pathlib import Path
 
-from scripts.schema_validation import validate
+from scripts.schema_validation import assert_write_compatible, validate
 
 EVENTS_SUBDIR = "events"
+HARNESS_DIRNAME = ".harness"  # duplica scripts.harness_scaffold.HARNESS_DIRNAME (evita import
+# circular: harness_scaffold importa schema_validation, não harness_event_writer).
 
 
 def _events_dir(run_dir: Path) -> Path:
     return run_dir / EVENTS_SUBDIR
 
 
+def _find_pinned_schema_version(run_dir: Path) -> str | None:
+    """Sobe a árvore a partir de `run_dir` procurando `.harness/config.json`. Retorna `None`
+    (não `"1.0"` nem qualquer default) quando `run_dir` não está dentro de um projeto real com
+    `.harness/` — nesse caso o guard de compatibilidade fica desligado, não fabrica um pinned
+    inexistente (mantém os testes que chamam `write_event` com um `run_dir` solto, ex.:
+    `tmp_path` direto, funcionando sem mudança de comportamento — task 16, AC3)."""
+    for ancestor in (run_dir, *run_dir.parents):
+        if ancestor.name == HARNESS_DIRNAME:
+            config_path = ancestor / "config.json"
+            if not config_path.exists():
+                return None
+            config = json.loads(config_path.read_text())
+            version = config.get("schema_version")
+            return str(version) if version is not None else None
+    return None
+
+
 def write_event(run_dir: Path, writer_id: str, event: dict[str, object]) -> Path:
     """Valida `event` contra execution-event.schema.json e faz append em
     `run_dir/events/<writer_id>.jsonl`. Levanta ValueError se o evento for inválido. Nunca
-    trunca/reescreve o arquivo — só append."""
+    trunca/reescreve o arquivo — só append.
+
+    Se `run_dir` estiver dentro de um projeto com `.harness/config.json` (task 16), rejeita
+    também um evento cujo `schema_version` seja mais novo que a versão pinned do projeto —
+    nunca grava um payload que o projeto ainda não sabe interpretar."""
     ok, errors = validate(event, "execution-event")
     if not ok:
         raise ValueError(f"evento inválido: {errors}")
+
+    pinned_version = _find_pinned_schema_version(run_dir)
+    if pinned_version is not None:
+        assert_write_compatible(
+            pinned_version=pinned_version,
+            payload_version=str(event.get("schema_version", pinned_version)),
+        )
 
     events_dir = _events_dir(run_dir)
     events_dir.mkdir(parents=True, exist_ok=True)
