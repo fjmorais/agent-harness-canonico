@@ -10,15 +10,24 @@ from __future__ import annotations
 import re
 from copy import deepcopy
 
-_CPF_RE = re.compile(r"\d{3}\.\d{3}\.\d{3}-\d{2}")
+_CPF_FORMATTED_RE = re.compile(r"\d{3}\.\d{3}\.\d{3}-\d{2}")
+# CPF/telefone sem formatação são ambíguos (ambos 10-11 dígitos crus) — mascarados juntos como
+# [ID], best-effort. Formatos com separador têm regex dedicada (mais específica, roda antes).
+_PHONE_FORMATTED_RE = re.compile(r"(?:\+55\s?)?\(?\d{2}\)?[\s.-]+9?\d{4}-\d{4}")
+_BARE_DIGIT_RUN_RE = re.compile(r"\b\d{10,11}\b")
 _EMAIL_RE = re.compile(r"[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}")
 _USER_HOME_RE = re.compile(r"/home/[^/\s]+")
-# tokens/API keys: prefixos comuns (sk-, ghp_, xox, etc.) seguidos de corpo alfanumérico longo.
-_SECRET_RE = re.compile(r"\b(?:sk-[a-zA-Z0-9-]{16,}|ghp_[a-zA-Z0-9]{16,}|xox[a-zA-Z0-9-]{16,})\b")
+# tokens/API keys: prefixos comuns (sk-, ghp_, github_pat_, xox, AKIA, etc.) + corpo longo.
+_SECRET_RE = re.compile(
+    r"\b(?:sk-[a-zA-Z0-9-]{16,}|ghp_[a-zA-Z0-9]{16,}|github_pat_[a-zA-Z0-9_]{16,}"
+    r"|xox[a-zA-Z0-9-]{16,}|AKIA[A-Z0-9]{12,})\b"
+)
 
 
 def _redact_text(value: str) -> str:
-    value = _CPF_RE.sub("***.***.***-**", value)
+    value = _CPF_FORMATTED_RE.sub("***.***.***-**", value)
+    value = _PHONE_FORMATTED_RE.sub("[PHONE]", value)
+    value = _BARE_DIGIT_RUN_RE.sub("[ID]", value)
     value = _EMAIL_RE.sub("[EMAIL]", value)
     value = _SECRET_RE.sub("[SECRET]", value)
     value = _USER_HOME_RE.sub("[USER_PATH]", value)

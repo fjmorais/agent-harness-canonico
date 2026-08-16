@@ -10,6 +10,20 @@ def test_redact_masks_cpf_with_dots_and_dash() -> None:
     assert "***.***.***-**" in out["payload"]["message"]
 
 
+def test_redact_masks_phone_with_area_code_and_dash() -> None:
+    payload = {"payload": {"message": "me liga no (11) 91234-5678 assim que puder"}}
+    out = redact(payload)
+    assert "91234-5678" not in out["payload"]["message"]
+    assert "[PHONE]" in out["payload"]["message"]
+
+
+def test_redact_masks_unformatted_cpf_or_phone_like_digit_run() -> None:
+    payload = {"payload": {"message": "documento 12345678900 anexado"}}
+    out = redact(payload)
+    assert "12345678900" not in out["payload"]["message"]
+    assert "[ID]" in out["payload"]["message"]
+
+
 def test_redact_masks_email() -> None:
     payload = {"payload": {"message": "contato: fulano.silva@example.com por favor"}}
     out = redact(payload)

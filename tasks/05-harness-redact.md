@@ -31,3 +31,10 @@ estruturalmente limitado a campos sem texto livre — ver ADR-001, Opção I).
 Esta é a única camada de redaction do design (ADR-001) — o caminho de agente não passa por
 aqui porque seu schema não permite texto livre. Não criar uma segunda implementação de
 redaction em outro lugar.
+
+**Correção pós-revisão (revisor-codigo, 2026-08-16 — bloqueante corrigido):** a primeira versão
+não mascarava telefone, apesar de listado no "What to build". Adicionado `_PHONE_FORMATTED_RE`
+(formatos com DDD/hífen) + `_BARE_DIGIT_RUN_RE` (10-11 dígitos crus, cobre CPF e telefone sem
+formatação juntos como `[ID]` — ambíguo por natureza, mascarar os dois é a escolha segura).
+`_SECRET_RE` também ampliado para `github_pat_` e chaves AWS (`AKIA...`), por ressalva não
+bloqueante do mesmo revisor.
