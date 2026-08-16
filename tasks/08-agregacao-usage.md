@@ -1,6 +1,6 @@
 # Agregação `usage.json` por modelo e correlação
 
-**Status:** not started
+**Status:** done
 **Blocked by:** 06-escritor-evento-concorrente.md
 
 ## What to build
@@ -14,14 +14,14 @@ sessão.
 
 ## Acceptance criteria
 
-- [ ] Eventos de uso de dois modelos diferentes dentro do mesmo run são agregados em entradas
+- [x] Eventos de uso de dois modelos diferentes dentro do mesmo run são agregados em entradas
       separadas de `usage_by_model` — tested by: teste unitário com fixture de timeline
       contendo eventos de 2 `model_id` distintos.
-- [ ] Eventos do mesmo modelo mas `correlation_id` diferentes (duas tasks na mesma sessão) são
+- [x] Eventos do mesmo modelo mas `correlation_id` diferentes (duas tasks na mesma sessão) são
       agregados separadamente — tested by: teste unitário com fixture de 2 `correlation_id`.
-- [ ] Tokens de input/output/cache/reasoning são somados corretamente por grupo — tested by:
+- [x] Tokens de input/output/cache/reasoning são somados corretamente por grupo — tested by:
       teste unitário com valores conhecidos, validando a soma.
-- [ ] Nenhum cálculo de custo em `$` aparece no `usage.json` gerado — tested by: teste unitário
+- [x] Nenhum cálculo de custo em `$` aparece no `usage.json` gerado — tested by: teste unitário
       verificando que o schema de saída não contém campo de preço (reforça ADR-001, Opção G).
 
 ## Notes
