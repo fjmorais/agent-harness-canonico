@@ -35,3 +35,9 @@ após confirmação explícita, fazer backup antes de qualquer migration estrutu
 
 Reaproveita a lógica de fingerprint da task 03 para decidir o que é "customizado" (protegido)
 vs. "gerado pelo instalador" (atualizável).
+
+**Desvio do critério de aceite (revisor-codigo, 2026-08-16):** os testes usam
+`apply_harness_scaffold` + `tmp_path` para montar o cenário "`.harness/` já existente" em vez da
+fixture estática `tests/fixtures/harness/v1-with-runs/` citada no critério de aceite —
+funcionalmente equivalente (prova o mesmo invariante de preservação de `runs/`), mesmo padrão de
+desvio já documentado na task 03. A fixture estática real será criada na task 15.
