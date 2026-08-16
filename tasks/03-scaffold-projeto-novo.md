@@ -42,3 +42,13 @@ já existente do `install-harness`).
 
 Ver ADR-001 (Opção K) para o racional de `project_id` por hash imutável. O `telemetry` desligado
 por padrão no `config.json` evita que hooks tentem escrever antes de C2 estar implementado.
+
+**Ressalvas do revisor-codigo (2026-08-16), endereçadas:**
+- `sys.path` agora é resolvido a partir de `--canonical` (não do path físico do arquivo) — ver
+  `_import_harness_scaffold()` em `install_harness.py`.
+- `ImportError` amplo trocado por `ModuleNotFoundError` restrito ao nome do módulo — erro real
+  de bug no `harness_scaffold.py` propaga em vez de ser mascarado.
+- Aviso explícito impresso quando o scaffold não está disponível (CLI standalone fora do repo).
+- `tests/fixtures/harness/v1-fresh/` ficou como placeholder — os testes reais usam `tmp_path`
+  diretamente; a fixture estática será populada de fato na task 15 (suíte de fixtures
+  completa), que é onde os cenários da seção 7 do plano original são consolidados.

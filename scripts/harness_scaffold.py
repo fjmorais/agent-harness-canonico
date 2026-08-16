@@ -8,9 +8,12 @@ from __future__ import annotations
 
 import hashlib
 import json
+import shutil
 from dataclasses import dataclass, field
 from datetime import UTC, datetime
 from pathlib import Path
+
+from scripts.schema_validation import current_version
 
 HARNESS_DIRNAME = ".harness"
 
@@ -150,3 +153,169 @@ def read_installed_files(target: Path) -> dict[str, str]:
     files = data["files"]
     assert isinstance(files, dict)
     return {str(k): str(v) for k, v in files.items()}
+
+
+# ------------------------------------------------------------------ update seguro (task 04)
+
+# path -> (kind, conteúdo default se precisar ser criado do zero)
+_EXPECTED_DIRS = VERSIONED_EMPTY_DIRS + IGNORED_EMPTY_DIRS + ["state"]
+_EXPECTED_FILES = [
+    "README.md",
+    ".gitignore",
+    "state/current-workflow.json",
+    "audit/audit.jsonl",
+]
+
+
+def is_harness_installed(target: Path) -> bool:
+    return (harness_dir(target) / "config.json").exists()
+
+
+@dataclass
+class MigrationItem:
+    schema: str
+    from_version: str
+    to_version: str
+    requires_confirmation: bool = True
+
+    def as_json(self) -> dict[str, object]:
+        return {
+            "schema": self.schema,
+            "from": self.from_version,
+            "to": self.to_version,
+            "requires_confirmation": self.requires_confirmation,
+        }
+
+
+@dataclass
+class UpdatePlan:
+    create_operations: list[ScaffoldOperation] = field(default_factory=list)
+    migrations: list[MigrationItem] = field(default_factory=list)
+
+    def as_json(self) -> dict[str, object]:
+        return {
+            "create_operations": [
+                {"action": op.action, "path": op.path} for op in self.create_operations
+            ],
+            "migrations": [m.as_json() for m in self.migrations],
+        }
+
+
+def plan_harness_update(target: Path) -> UpdatePlan:
+    """Plano de update para um `.harness/` já existente. Nunca inclui `runs/`, `deliveries/` ou
+    qualquer arquivo já presente — só itens ausentes e migrations pendentes. Não escreve nada."""
+    base = harness_dir(target)
+    plan = UpdatePlan()
+
+    for d in _EXPECTED_DIRS:
+        if not (base / d).exists():
+            plan.create_operations.append(ScaffoldOperation("create_directory", d))
+    for f in _EXPECTED_FILES:
+        if not (base / f).exists():
+            plan.create_operations.append(ScaffoldOperation("create_file", f))
+
+    config_path = base / "config.json"
+    if config_path.exists():
+        config = json.loads(config_path.read_text())
+        installed_version = str(config.get("schema_version", "1.0"))
+        latest_version = current_version("harness-config")
+        if installed_version != latest_version:
+            plan.migrations.append(
+                MigrationItem("harness-config", installed_version, latest_version)
+            )
+
+    return plan
+
+
+def _default_content_for(rel_path: str, project_name: str) -> str:
+    if rel_path == "README.md":
+        return _readme_content(project_name)
+    if rel_path == ".gitignore":
+        return GITIGNORE_CONTENT
+    if rel_path == "audit/audit.jsonl":
+        return ""
+    if rel_path == "state/current-workflow.json":
+        payload: dict[str, object] = {
+            "schema_version": "1.0",
+            "project_id": "",
+            "active_run_id": None,
+            "active_writers": [],
+            "updated_at": datetime.now(UTC).isoformat(),
+        }
+        return json.dumps(payload, indent=2, ensure_ascii=False) + "\n"
+    raise ValueError(f"sem conteúdo default para: {rel_path}")
+
+
+def apply_harness_update(
+    target: Path, project_name: str, confirm_migrations: bool = False
+) -> dict[str, int]:
+    """Aplica só o que está no plano: cria itens ausentes; aplica migrations apenas se
+    `confirm_migrations=True` (nunca implícito). Nunca toca `runs/`, `deliveries/`,
+    `project_id` ou campos de config já customizados além de `schema_version`."""
+    base = harness_dir(target)
+    plan = plan_harness_update(target)
+
+    created = 0
+    for op in plan.create_operations:
+        path = base / op.path
+        if op.action == "create_directory":
+            path.mkdir(parents=True, exist_ok=True)
+        else:
+            if op.path == "state/current-workflow.json":
+                # project_id precisa ser lido do project.json existente, não inventado
+                project_state = json.loads((base / "state" / "project.json").read_text())
+                payload = {
+                    "schema_version": "1.0",
+                    "project_id": project_state["project_id"],
+                    "active_run_id": None,
+                    "active_writers": [],
+                    "updated_at": datetime.now(UTC).isoformat(),
+                }
+                path.write_text(
+                    json.dumps(payload, indent=2, ensure_ascii=False) + "\n", encoding="utf-8"
+                )
+            else:
+                path.write_text(_default_content_for(op.path, project_name), encoding="utf-8")
+        created += 1
+
+    backups = 0
+    migrations_applied = 0
+    if confirm_migrations:
+        for migration in plan.migrations:
+            if migration.schema != "harness-config":
+                continue
+            config_path = base / "config.json"
+            backup_dir = base / "backups"
+            backup_dir.mkdir(parents=True, exist_ok=True)
+            stamp = datetime.now(UTC).strftime("%Y%m%dT%H%M%S%f")
+            backup_path = backup_dir / f"config.json.{stamp}.bak"
+            shutil.copy2(config_path, backup_path)
+            backups += 1
+
+            config = json.loads(config_path.read_text())
+            config["schema_version"] = migration.to_version
+            config_path.write_text(
+                json.dumps(config, indent=2, ensure_ascii=False) + "\n", encoding="utf-8"
+            )
+            migrations_applied += 1
+
+    # atualiza installed-files.json só para os arquivos tocados nesta chamada — preserva
+    # entradas de arquivos preexistentes/customizados que não foram recriados.
+    installed_files_path = base / "state" / "installed-files.json"
+    existing_fingerprints = read_installed_files(target) if installed_files_path.exists() else {}
+    touched_paths = [op.path for op in plan.create_operations]
+    if confirm_migrations and migrations_applied:
+        touched_paths.append("config.json")
+    for rel_path in touched_paths:
+        file_path = base / rel_path
+        if file_path.is_file():
+            existing_fingerprints[rel_path] = fingerprint_file(file_path)
+    installed_files_path.write_text(
+        json.dumps(
+            {"schema_version": "1.0", "files": existing_fingerprints}, indent=2, ensure_ascii=False
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+
+    return {"created": created, "migrations_applied": migrations_applied, "backups": backups}

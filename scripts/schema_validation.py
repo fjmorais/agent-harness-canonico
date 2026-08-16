@@ -36,6 +36,16 @@ def load_compatibility() -> dict[str, object]:
     return data
 
 
+def current_version(schema_name: str) -> str:
+    """Retorna a versão atual (mais recente) publicada para `schema_name`."""
+    compatibility = load_compatibility()
+    schemas = compatibility["schemas"]
+    assert isinstance(schemas, dict)
+    entry = schemas[schema_name]
+    assert isinstance(entry, dict)
+    return str(entry["current"])
+
+
 def supported_versions(schema_name: str) -> list[str]:
     """Retorna a lista de versões suportadas (schema atual + N-1) para `schema_name`."""
     compatibility = load_compatibility()

@@ -17,6 +17,7 @@ Fluxo:
   5. resolve_conflicts      -> interativo (input()) ou via --decisions-file (--json)
   6. apply_plan()           -> copia/gera/scaffold, espelha .cursor/, grava manifest
 """
+
 from __future__ import annotations
 
 import argparse
@@ -32,19 +33,39 @@ from pathlib import Path
 
 DEFAULT_CANONICAL = "/home/fabiano/agent-harness-canonico"
 MANIFEST_REL = ".claude/harness-manifest.json"
-KEYWORD_FILES = ["pyproject.toml", "package.json"]  # fallback: scan bruto se o parse estruturado falhar
+KEYWORD_FILES = [
+    "pyproject.toml",
+    "package.json",
+]  # fallback: scan bruto se o parse estruturado falhar
 
-# scripts/harness_scaffold.py vive na raiz do canônico (não em .claude/skills/) — ver task 03.
-sys.path.insert(0, str(Path(__file__).resolve().parents[4]))
-try:
-    from scripts.harness_scaffold import apply_harness_scaffold, harness_dir, plan_harness_scaffold
-except ImportError:  # canônico sendo usado como CLI standalone fora do repo agent-harness-canonico
-    apply_harness_scaffold = None  # type: ignore[assignment]
-    harness_dir = None  # type: ignore[assignment]
-    plan_harness_scaffold = None  # type: ignore[assignment]
+
+def _import_harness_scaffold(canonical: Path) -> tuple[object, ...] | None:
+    """Importa scripts/harness_scaffold.py a partir do `--canonical` informado (não do path
+    físico deste arquivo) — mantém a mesma parametrização que o resto do script já respeita.
+    Retorna None só quando o módulo de fato não existe naquele canônico (ex.: CLI copiada
+    standalone para fora do repo agent-harness-canonico); qualquer outro erro de import
+    (bug real no módulo) propaga, não é mascarado."""
+    canonical_str = str(canonical)
+    if canonical_str not in sys.path:
+        sys.path.insert(0, canonical_str)
+    try:
+        import scripts.harness_scaffold as hs
+    except ModuleNotFoundError as exc:
+        if exc.name != "scripts" and exc.name != "scripts.harness_scaffold":
+            raise
+        return None
+    return (
+        hs.apply_harness_scaffold,
+        hs.apply_harness_update,
+        hs.harness_dir,
+        hs.is_harness_installed,
+        hs.plan_harness_scaffold,
+        hs.plan_harness_update,
+    )
 
 
 # --------------------------------------------------------------------------- detecção
+
 
 def read_manifest(target: Path) -> dict | None:
     manifest_path = target / MANIFEST_REL
@@ -95,11 +116,11 @@ def _names_from_pyproject(path: Path) -> set[str]:
             names.add(_dep_name(dep))
     poetry = data.get("tool", {}).get("poetry", {})
     for key in ("dependencies", "dev-dependencies"):
-        for pkg_name in (poetry.get(key) or {}):
+        for pkg_name in poetry.get(key) or {}:
             if pkg_name.lower() != "python":
                 names.add(pkg_name.lower())
     for group in (poetry.get("group") or {}).values():
-        for pkg_name in (group.get("dependencies") or {}):
+        for pkg_name in group.get("dependencies") or {}:
             names.add(pkg_name.lower())
     uv_dev = data.get("tool", {}).get("uv", {}).get("dev-dependencies", []) or []
     for dep in uv_dev:
@@ -133,7 +154,7 @@ def _names_from_package_lock_json(path: Path) -> set[str]:
     except (json.JSONDecodeError, OSError, UnicodeDecodeError):
         return set()
     names: set[str] = set()
-    for key in (data.get("packages") or {}):
+    for key in data.get("packages") or {}:
         # chaves tipo "node_modules/pkg" ou "node_modules/@scope/pkg"
         leaf = key.rsplit("node_modules/", 1)[-1]
         if leaf:
@@ -207,10 +228,12 @@ def condition_matches(condition: dict, signals: dict) -> bool:
     if ctype == "always":
         return True
     if ctype == "file_exists":
-        return any((Path(f) == Path("pyproject.toml") and signals["pyproject"])
-                   or (Path(f) == Path("package.json") and signals["package_json"])
-                   or (Path(f) == Path("docker-compose.yml") and signals["docker_compose"])
-                   for f in condition["files"])
+        return any(
+            (Path(f) == Path("pyproject.toml") and signals["pyproject"])
+            or (Path(f) == Path("package.json") and signals["package_json"])
+            or (Path(f) == Path("docker-compose.yml") and signals["docker_compose"])
+            for f in condition["files"]
+        )
     if ctype == "keyword_in_files":
         return any(kw in signals["keywords"] for kw in condition["keywords"])
     raise ValueError(f"condição desconhecida: {ctype}")
@@ -222,6 +245,7 @@ def load_stack_map(canonical: Path) -> dict:
 
 
 # --------------------------------------------------------------------------- plano
+
 
 def paths_differ(a: Path, b: Path) -> bool:
     """True se a (existente) e b (canônico) têm conteúdo diferente. Compara árvore para dirs."""
@@ -241,9 +265,15 @@ def paths_differ(a: Path, b: Path) -> bool:
         return True
 
 
-def build_plan(target: Path, canonical: Path, stack_map: dict, manifest: dict | None,
-               signals: dict, force_categories: frozenset[str] = frozenset(),
-               force_all: bool = False) -> list[dict]:
+def build_plan(
+    target: Path,
+    canonical: Path,
+    stack_map: dict,
+    manifest: dict | None,
+    signals: dict,
+    force_categories: frozenset[str] = frozenset(),
+    force_all: bool = False,
+) -> list[dict]:
     artefacts = (manifest or {}).get("artefacts", {})
     plan: list[dict] = []
 
@@ -273,7 +303,9 @@ def build_plan(target: Path, canonical: Path, stack_map: dict, manifest: dict | 
             tracked = artefacts.get(rel)
 
             if not dest.exists():
-                item["action"] = "SCAFFOLD" if kind == "scaffold" else ("COPY" if kind == "copy" else "GENERATE")
+                item["action"] = (
+                    "SCAFFOLD" if kind == "scaffold" else ("COPY" if kind == "copy" else "GENERATE")
+                )
                 plan.append(item)
                 continue
 
@@ -306,6 +338,7 @@ def build_plan(target: Path, canonical: Path, stack_map: dict, manifest: dict | 
 
 # --------------------------------------------------------------------------- conflitos
 
+
 def render_diff(dest: Path, src: Path) -> str:
     if dest.is_dir() or src.is_dir():
         if not dest.is_dir() or not src.is_dir():
@@ -324,7 +357,9 @@ def render_diff(dest: Path, src: Path) -> str:
         src_lines = src.read_text(encoding="utf-8", errors="ignore").splitlines(keepends=True)
     except OSError as exc:
         return f"(não foi possível ler para diff: {exc})"
-    diff = difflib.unified_diff(dest_lines, src_lines, fromfile="destino (atual)", tofile="canônico (novo)")
+    diff = difflib.unified_diff(
+        dest_lines, src_lines, fromfile="destino (atual)", tofile="canônico (novo)"
+    )
     return "".join(diff) or "(sem diferenças de texto)"
 
 
@@ -344,7 +379,9 @@ def resolve_conflicts_interactive(plan: list[dict], target: Path, canonical: Pat
         dest = target / item["path"]
         src = canonical / item["path"]
         while True:
-            print(f"\n{item['path']} já existe e não está rastreado no manifest (ou difere do canônico).")
+            print(
+                f"\n{item['path']} já existe e não está rastreado no manifest (ou difere do canônico)."
+            )
             choice = input(
                 "[k]eep  [o]verwrite  [d]iff  [m]erge manual (salva canônico como .harness-incoming)  "
                 "[K]eep all restantes  [O]verwrite all restantes  [q] cancelar > "
@@ -381,11 +418,14 @@ def resolve_conflicts_from_decisions(plan: list[dict], decisions: dict) -> None:
             continue
         resolution = decisions.get(item["path"])
         if resolution not in ("keep", "overwrite", "merge"):
-            raise ValueError(f"decisão ausente/inválida para conflito: {item['path']!r} -> {resolution!r}")
+            raise ValueError(
+                f"decisão ausente/inválida para conflito: {item['path']!r} -> {resolution!r}"
+            )
         item["resolution"] = resolution
 
 
 # --------------------------------------------------------------------------- geração de stubs
+
 
 def generate_content(rel_path: str, project_name: str, stack_summary: str) -> str:
     today = date.today().isoformat()
@@ -427,27 +467,62 @@ def generate_content(rel_path: str, project_name: str, stack_summary: str) -> st
         hooks = {}
         if "python" in stack_summary.lower() or "fastapi" in stack_summary.lower():
             hooks = {
-                "PostToolUse": [{"matcher": "Edit|Write", "hooks": [
-                    {"type": "command", "command": "uv run ruff format . 2>/dev/null; uv run ruff check --fix . 2>/dev/null; true"}
-                ]}],
-                "Stop": [{"hooks": [
-                    {"type": "command", "command": "uv run ruff check . && uv run mypy . && uv run pytest -q || exit 2"}
-                ]}],
+                "PostToolUse": [
+                    {
+                        "matcher": "Edit|Write",
+                        "hooks": [
+                            {
+                                "type": "command",
+                                "command": "uv run ruff format . 2>/dev/null; uv run ruff check --fix . 2>/dev/null; true",
+                            }
+                        ],
+                    }
+                ],
+                "Stop": [
+                    {
+                        "hooks": [
+                            {
+                                "type": "command",
+                                "command": "uv run ruff check . && uv run mypy . && uv run pytest -q || exit 2",
+                            }
+                        ]
+                    }
+                ],
             }
         elif "react" in stack_summary.lower() or "frontend" in stack_summary.lower():
             hooks = {
-                "PostToolUse": [{"matcher": "Edit|Write", "hooks": [
-                    {"type": "command", "command": "npx eslint --fix . 2>/dev/null; true"}
-                ]}],
-                "Stop": [{"hooks": [
-                    {"type": "command", "command": "npx eslint . && npx vitest run || exit 2"}
-                ]}],
+                "PostToolUse": [
+                    {
+                        "matcher": "Edit|Write",
+                        "hooks": [
+                            {"type": "command", "command": "npx eslint --fix . 2>/dev/null; true"}
+                        ],
+                    }
+                ],
+                "Stop": [
+                    {
+                        "hooks": [
+                            {
+                                "type": "command",
+                                "command": "npx eslint . && npx vitest run || exit 2",
+                            }
+                        ]
+                    }
+                ],
             }
-        return json.dumps({"env": {}, "permissions": {"allow": [], "deny": []}, "hooks": hooks}, indent=2, ensure_ascii=False) + "\n"
+        return (
+            json.dumps(
+                {"env": {}, "permissions": {"allow": [], "deny": []}, "hooks": hooks},
+                indent=2,
+                ensure_ascii=False,
+            )
+            + "\n"
+        )
     raise ValueError(f"sem template de geração para: {rel_path}")
 
 
 # --------------------------------------------------------------------------- aplicação
+
 
 def mirror_to_cursor(target: Path, canonical: Path, rel_path: str) -> None:
     p = Path(rel_path)
@@ -512,11 +587,26 @@ def convert_rule_to_mdc(rule_path: Path) -> str:
     return f"---\ndescription: {description}\nglobs: {globs_json}\nalwaysApply: {always_apply}\n---\n\n\n{body}\n"
 
 
-def apply_plan(plan: list[dict], target: Path, canonical: Path, project_name: str, stack_summary: str,
-               mode: str, manifest: dict | None) -> dict:
+def apply_plan(
+    plan: list[dict],
+    target: Path,
+    canonical: Path,
+    project_name: str,
+    stack_summary: str,
+    mode: str,
+    manifest: dict | None,
+) -> dict:
     artefacts = dict((manifest or {}).get("artefacts", {}))
-    counts = {"copied": 0, "generated": 0, "scaffolded": 0, "auto_updated": 0,
-              "kept": 0, "overwritten": 0, "merged_manual": 0, "skipped_stack": 0}
+    counts = {
+        "copied": 0,
+        "generated": 0,
+        "scaffolded": 0,
+        "auto_updated": 0,
+        "kept": 0,
+        "overwritten": 0,
+        "merged_manual": 0,
+        "skipped_stack": 0,
+    }
 
     for item in plan:
         rel = item["path"]
@@ -580,20 +670,28 @@ def apply_plan(plan: list[dict], target: Path, canonical: Path, project_name: st
 
         if action == "overwrite":
             if item["kind"] == "generate":
-                dest.write_text(generate_content(rel, project_name, stack_summary), encoding="utf-8")
+                dest.write_text(
+                    generate_content(rel, project_name, stack_summary), encoding="utf-8"
+                )
             elif src.is_dir():
                 if dest.exists():
                     shutil.rmtree(dest)
                 shutil.copytree(src, dest)
             else:
                 shutil.copy2(src, dest)
-            artefacts[rel] = {"source": "canonical" if item["kind"] == "copy" else "generated", "customized": False}
+            artefacts[rel] = {
+                "source": "canonical" if item["kind"] == "copy" else "generated",
+                "customized": False,
+            }
             mirror_to_cursor(target, canonical, rel)
             counts["overwritten"] += 1
             continue
 
         if action == "keep":
-            artefacts[rel] = {"source": artefacts.get(rel, {}).get("source", "unknown"), "customized": True}
+            artefacts[rel] = {
+                "source": artefacts.get(rel, {}).get("source", "unknown"),
+                "customized": True,
+            }
             counts["kept"] += 1
             continue
 
@@ -602,12 +700,17 @@ def apply_plan(plan: list[dict], target: Path, canonical: Path, project_name: st
             if incoming.exists():
                 shutil.rmtree(incoming) if incoming.is_dir() else incoming.unlink()
             if item["kind"] == "generate":
-                incoming.write_text(generate_content(rel, project_name, stack_summary), encoding="utf-8")
+                incoming.write_text(
+                    generate_content(rel, project_name, stack_summary), encoding="utf-8"
+                )
             elif src.is_dir():
                 shutil.copytree(src, incoming)
             else:
                 shutil.copy2(src, incoming)
-            artefacts[rel] = {"source": artefacts.get(rel, {}).get("source", "unknown"), "customized": True}
+            artefacts[rel] = {
+                "source": artefacts.get(rel, {}).get("source", "unknown"),
+                "customized": True,
+            }
             counts["merged_manual"] += 1
             continue
 
@@ -628,7 +731,8 @@ def write_manifest(target: Path, canonical: Path, mode: str, artefacts: dict) ->
         "canonical_path": str(canonical),
         "installed_at": date.today().isoformat(),
         "mode": mode,
-        "capabilities": previous.get("capabilities") or {
+        "capabilities": previous.get("capabilities")
+        or {
             "workflow": True,
             "dev_loop": True,
             "delivery_metrics": True,
@@ -636,7 +740,9 @@ def write_manifest(target: Path, canonical: Path, mode: str, artefacts: dict) ->
         },
         "artefacts": artefacts,
     }
-    manifest_path.write_text(json.dumps(manifest, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+    manifest_path.write_text(
+        json.dumps(manifest, indent=2, ensure_ascii=False) + "\n", encoding="utf-8"
+    )
 
 
 # --------------------------------------------------------------------------- apresentação
@@ -656,7 +762,9 @@ BUCKET_LABELS = {
 def print_plan_human(plan: list[dict], mode: str, signals: dict) -> None:
     print(f"\n# Install Plan\n\n## Modo: {mode}")
     kw = ", ".join(sorted(signals["keywords"])) or "(nenhuma)"
-    print(f"## Stack detectada: keywords={kw} pyproject={signals['pyproject']} package.json={signals['package_json']}\n")
+    print(
+        f"## Stack detectada: keywords={kw} pyproject={signals['pyproject']} package.json={signals['package_json']}\n"
+    )
     for bucket, label in BUCKET_LABELS.items():
         items = [i for i in plan if i["action"] == bucket]
         if not items:
@@ -676,7 +784,10 @@ def print_plan_human(plan: list[dict], mode: str, signals: dict) -> None:
 def plan_to_json(plan: list[dict], mode: str, signals: dict) -> dict:
     return {
         "mode": mode,
-        "stack_signals": {**{k: v for k, v in signals.items() if k != "keywords"}, "keywords": sorted(signals["keywords"])},
+        "stack_signals": {
+            **{k: v for k, v in signals.items() if k != "keywords"},
+            "keywords": sorted(signals["keywords"]),
+        },
         "items": plan,
     }
 
@@ -688,19 +799,45 @@ def summarize(counts: dict) -> str:
 
 # --------------------------------------------------------------------------- main
 
+
 def main() -> None:
-    parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
+    parser = argparse.ArgumentParser(
+        description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
+    )
     parser.add_argument("destino", nargs="?", help="pasta alvo onde instalar/atualizar o harness")
-    parser.add_argument("--canonical", default=DEFAULT_CANONICAL, help="path do canônico (default: %(default)s)")
-    parser.add_argument("--dry-run", action="store_true", help="só mostra o plano, não escreve nada")
-    parser.add_argument("--yes", action="store_true", help="modo não-interativo: mantém tudo que já existe (nunca sobrescreve)")
-    parser.add_argument("--json", action="store_true", help="imprime o plano em JSON; usa --decisions-file para aplicar")
-    parser.add_argument("--decisions-file", help="JSON {path: keep|overwrite|merge} para resolver conflitos sem prompt")
-    parser.add_argument("--force-category", action="append", default=[], metavar="NOME",
-                         help="inclui a categoria mesmo sem stack detectada (repetível, ex.: "
-                              "--force-category langgraph --force-category rag_vetorial)")
-    parser.add_argument("--force-all", action="store_true",
-                         help="inclui TODAS as categorias mesmo sem stack detectada (sobrepõe --force-category)")
+    parser.add_argument(
+        "--canonical", default=DEFAULT_CANONICAL, help="path do canônico (default: %(default)s)"
+    )
+    parser.add_argument(
+        "--dry-run", action="store_true", help="só mostra o plano, não escreve nada"
+    )
+    parser.add_argument(
+        "--yes",
+        action="store_true",
+        help="modo não-interativo: mantém tudo que já existe (nunca sobrescreve)",
+    )
+    parser.add_argument(
+        "--json",
+        action="store_true",
+        help="imprime o plano em JSON; usa --decisions-file para aplicar",
+    )
+    parser.add_argument(
+        "--decisions-file",
+        help="JSON {path: keep|overwrite|merge} para resolver conflitos sem prompt",
+    )
+    parser.add_argument(
+        "--force-category",
+        action="append",
+        default=[],
+        metavar="NOME",
+        help="inclui a categoria mesmo sem stack detectada (repetível, ex.: "
+        "--force-category langgraph --force-category rag_vetorial)",
+    )
+    parser.add_argument(
+        "--force-all",
+        action="store_true",
+        help="inclui TODAS as categorias mesmo sem stack detectada (sobrepõe --force-category)",
+    )
     args = parser.parse_args()
 
     canonical = Path(args.canonical).resolve()
@@ -713,11 +850,17 @@ def main() -> None:
         if args.json:
             print("--json requer <destino> explícito", file=sys.stderr)
             sys.exit(1)
-        destino = input(f"Em qual pasta devo instalar/atualizar o harness? (Enter para {Path.cwd()}) ").strip() or str(Path.cwd())
+        destino = input(
+            f"Em qual pasta devo instalar/atualizar o harness? (Enter para {Path.cwd()}) "
+        ).strip() or str(Path.cwd())
 
     target = Path(destino).resolve()
     if not target.exists():
-        if args.yes or args.json or input(f"{target} não existe. Criar? [S/n] ").strip().lower() != "n":
+        if (
+            args.yes
+            or args.json
+            or input(f"{target} não existe. Criar? [S/n] ").strip().lower() != "n"
+        ):
             target.mkdir(parents=True)
         else:
             print("Cancelado.")
@@ -729,17 +872,42 @@ def main() -> None:
     keywords = collect_keywords(stack_map)
     signals = detect_stack_signals(target, keywords)
     force_categories = frozenset(args.force_category)
-    plan = build_plan(target, canonical, stack_map, manifest, signals, force_categories, args.force_all)
+    plan = build_plan(
+        target, canonical, stack_map, manifest, signals, force_categories, args.force_all
+    )
 
-    # .harness/ scaffold — só para projeto novo (sem .harness/ ainda). Update seguro é task 04.
+    # .harness/ scaffold (projeto novo) ou update seguro (task 03/04) — importado a partir do
+    # --canonical informado, não do path físico deste arquivo.
+    harness_fns = _import_harness_scaffold(canonical)
+    apply_harness_scaffold = apply_harness_update = None
+    harness_dir_fn = is_harness_installed = plan_harness_scaffold = plan_harness_update = None
     harness_plan = None
-    if plan_harness_scaffold is not None and harness_dir is not None and not harness_dir(target).exists():
-        harness_plan = plan_harness_scaffold(target)
+    harness_update_plan = None
+    if harness_fns is None:
+        if not args.json:
+            print(
+                "(scaffold .harness/ não disponível — rodando fora do repo agent-harness-canonico)"
+            )
+    else:
+        (
+            apply_harness_scaffold,
+            apply_harness_update,
+            harness_dir_fn,
+            is_harness_installed,
+            plan_harness_scaffold,
+            plan_harness_update,
+        ) = harness_fns
+        if not harness_dir_fn(target).exists():
+            harness_plan = plan_harness_scaffold(target)
+        elif is_harness_installed(target):
+            harness_update_plan = plan_harness_update(target)
 
     if args.json:
         plan_json = plan_to_json(plan, mode, signals)
         if harness_plan is not None:
             plan_json["harness_scaffold"] = harness_plan.as_json()
+        if harness_update_plan is not None:
+            plan_json["harness_update"] = harness_update_plan.as_json()
         print(json.dumps(plan_json, indent=2, ensure_ascii=False))
         if args.dry_run or not args.decisions_file:
             return
@@ -751,6 +919,11 @@ def main() -> None:
         applied = {"applied": counts}
         if harness_plan is not None and apply_harness_scaffold is not None:
             applied["harness_scaffold"] = apply_harness_scaffold(target, project_name)
+        if harness_update_plan is not None and apply_harness_update is not None:
+            confirm_migrations = bool(decisions.get("confirm_harness_migrations", False))
+            applied["harness_update"] = apply_harness_update(
+                target, project_name, confirm_migrations=confirm_migrations
+            )
         print(json.dumps(applied, indent=2, ensure_ascii=False))
         return
 
@@ -760,23 +933,55 @@ def main() -> None:
         for op in harness_plan.operations:
             print(f"- {op.action}: .harness/{op.path}")
         print()
+    if harness_update_plan is not None:
+        print("## .harness/ — update seguro (projeto existente)")
+        for op in harness_update_plan.create_operations:
+            print(f"- {op.action}: .harness/{op.path}")
+        for migration in harness_update_plan.migrations:
+            print(
+                f"- MIGRATION: {migration.schema} {migration.from_version} -> "
+                f"{migration.to_version} (requires_confirmation={migration.requires_confirmation})"
+            )
+        print()
     if args.dry_run:
         return
+
+    harness_extra = (len(harness_plan.operations) if harness_plan is not None else 0) + (
+        len(harness_update_plan.create_operations) if harness_update_plan is not None else 0
+    )
 
     if args.yes:
         for item in plan:
             if item["action"] == "CONFLICT":
                 item["resolution"] = "keep"
+        confirm_migrations = False  # nunca aplica migration automaticamente em modo não-interativo
     else:
         resolve_conflicts_interactive(plan, target, canonical)
-        n_actionable = sum(1 for i in plan if i["action"] not in ("SKIP_STACK", "KEEP", "UP_TO_DATE"))
-        if n_actionable == 0:
+        n_actionable = (
+            sum(1 for i in plan if i["action"] not in ("SKIP_STACK", "KEEP", "UP_TO_DATE"))
+            + harness_extra
+        )
+        if n_actionable == 0 and not (harness_update_plan and harness_update_plan.migrations):
             print("Nada a fazer — harness já está atualizado.")
             return
-        confirm = input(f"\n{n_actionable} artefatos serão tocados. Confirma? [s/N] ").strip().lower()
-        if confirm != "s":
-            print("Cancelado — nada foi escrito.")
-            return
+        if n_actionable > 0:
+            confirm = (
+                input(f"\n{n_actionable} artefatos serão tocados. Confirma? [s/N] ").strip().lower()
+            )
+            if confirm != "s":
+                print("Cancelado — nada foi escrito.")
+                return
+        confirm_migrations = False
+        if harness_update_plan is not None and harness_update_plan.migrations:
+            migration_confirm = (
+                input(
+                    f"\n{len(harness_update_plan.migrations)} migration(ões) de schema pendente(s) "
+                    "— aplicar agora? [s/N] "
+                )
+                .strip()
+                .lower()
+            )
+            confirm_migrations = migration_confirm == "s"
 
     project_name = target.name
     stack_summary = ", ".join(sorted(signals["keywords"])) or "(genérica)"
@@ -784,6 +989,11 @@ def main() -> None:
     if harness_plan is not None and apply_harness_scaffold is not None:
         apply_harness_scaffold(target, project_name)
         print(".harness/ criado.")
+    if harness_update_plan is not None and apply_harness_update is not None:
+        update_result = apply_harness_update(
+            target, project_name, confirm_migrations=confirm_migrations
+        )
+        print(f".harness/ atualizado: {update_result}.")
     print(f"\nFeito: {summarize(counts)}.")
     print("\nPróximos passos:")
     print("  1. /grill-with-docs — preencher CONTEXT.md com terminologia real do domínio")
